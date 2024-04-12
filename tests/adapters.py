@@ -6,6 +6,171 @@ from typing import IO, BinaryIO, Iterable, Optional, Type
 
 import numpy.typing as npt
 import torch
+import math
+import numpy as np
+
+import torch
+import torch.nn.functional as F
+
+
+def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
+
+    from torch import mean
+    
+    stable_logits = inputs - torch.max(inputs, dim=1, keepdim=True)[0]
+    sum_logits = torch.sum(torch.exp(stable_logits), dim=1)
+    sum_of_log_exp = torch.log(sum_logits)
+
+    logits_of_true_class = stable_logits.gather(dim=1, index=targets.unsqueeze(1))
+    logits_of_true_class = logits_of_true_class.squeeze()
+    
+    loss_per_example = sum_of_log_exp - logits_of_true_class
+    cross_entropy_mean = mean(loss_per_example)
+    
+    return cross_entropy_mean
+
+
+def rmsnorm(
+    d_model: int,
+    eps: float,
+    weights: dict[str, torch.FloatTensor],
+    in_features: torch.FloatTensor,
+    weight_key="weight"
+) -> torch.FloatTensor:
+    from torch.nn import Parameter
+    
+    rms_norm = torch.sqrt(eps + torch.mean(in_features ** 2, dim=-1, keepdim=True))
+
+    features_normalized = in_features / rms_norm
+    final_output = Parameter(weights[weight_key]) * features_normalized
+    
+    return final_output
+
+
+
+def positionwise_feedforward(
+    d_model: int,
+    d_ff: int,
+    weights: dict[str, torch.FloatTensor],
+    in_features: torch.FloatTensor,
+    weight_1="w1.weight",
+    weight_2="w2.weight",
+) -> torch.FloatTensor:
+    
+    import numpy as np
+
+    w1_weights = weights[weight_1]
+    w2_weights = weights[weight_2]
+
+    #breakpoint()
+
+    first_linear_transformation_output = in_features@w1_weights.t()
+    first_linear_transformation_output = run_gelu(first_linear_transformation_output)
+    output = first_linear_transformation_output@w2_weights.t()
+    
+    return output
+
+
+def transformer_block(
+    d_model: int,
+    num_heads: int,
+    d_ff: int,
+    attn_pdrop: float,
+    residual_pdrop: float,
+    weights: dict[str, torch.FloatTensor],
+    in_features: torch.FloatTensor,
+    weight_keys: dict[str, str],
+) -> torch.FloatTensor:
+    
+    if weight_keys is None:
+        breakpoint()
+        weight_keys = {
+            "rms_norm_1": "ln1.weight",
+            "rms_norm_2": "ln2.weight",
+            "positionwise_feedforward_1": "ffn.w1.weight",
+            "positionwise_feedforward_2": "ffn.w2.weight",
+        }
+
+    eps = 1e-5
+
+    rms_norm_output = rmsnorm(d_model=d_model, eps=eps, in_features=in_features, weights=weights, weight_key=weight_keys["rms_norm_1"])
+    attention_output = multihead_self_attention(d_model, num_heads, attn_pdrop, weights, rms_norm_output, weight_keys=weight_keys)
+    causal_attention_output = F.dropout(attention_output, p=residual_pdrop, inplace=False)
+    attention_output = in_features + causal_attention_output
+
+    rms_norm_output = rmsnorm(d_model=d_model, eps=eps, in_features=attention_output, weights=weights, weight_key=weight_keys["rms_norm_2"])
+    position_feedforward_output = positionwise_feedforward(d_model, d_ff, weights=weights, in_features=rms_norm_output,
+                                                           weight_1=weight_keys["positionwise_feedforward_1"], 
+                                                           weight_2=weight_keys["positionwise_feedforward_2"])
+    position_feedforward_output = F.dropout(position_feedforward_output, p=residual_pdrop, inplace=False)
+    final_output = attention_output + position_feedforward_output
+
+    return final_output
+
+
+
+
+
+def multihead_self_attention(
+    d_model: int,
+    num_heads: int,
+    attn_pdrop: float,
+    weights: dict[str, torch.FloatTensor],
+    in_features: torch.FloatTensor,
+    weight_keys: dict[str, str] = None,
+) -> torch.FloatTensor:
+    
+    
+    import torch.nn.functional as F
+
+    #breakpoint()
+
+    d_key =  d_model // num_heads
+    batch_size, seq_length, _ = in_features.size()
+
+    try:
+        Q_weights = torch.cat([weights[f"q_heads.{row}.weight"] for row in range(num_heads)], dim=0)
+        K_weights = torch.cat([weights[f"k_heads.{row}.weight"] for row in range(num_heads)], dim=0)
+        V_weights = torch.cat([weights[f"v_heads.{row}.weight"] for row in range(num_heads)], dim=0)
+    except:
+        try:
+            Q_weights = weights[f"attn.q_proj.weight"]
+            K_weights = weights[f"attn.k_proj.weight"] 
+            V_weights = weights[f"attn.v_proj.weight"]
+        except:
+            Q_weights = weights[weight_keys["q_proj"]]
+            K_weights = weights[weight_keys["k_proj"]] 
+            V_weights = weights[weight_keys["v_proj"]]
+
+    query_output = torch.matmul(in_features, Q_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+    key_output = torch.matmul(in_features, K_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+    value_output = torch.matmul(in_features, V_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+
+    mask = torch.triu(torch.ones(seq_length, seq_length), diagonal=1) > 0
+    attention_output = SDPA(query_output, key_output, value_output, 
+                            mask, pdrop=attn_pdrop)
+    attention_output = attention_output.transpose(1, 2).contiguous().view(batch_size, -1, d_model)
+    try:
+        final_attention_output = torch.matmul(attention_output, weights["output_proj.weight"].transpose(0, 1))
+    except:
+        try:
+            final_attention_output = torch.matmul(attention_output, weights["attn.output_proj.weight"].transpose(0, 1))
+        except:
+            final_attention_output = torch.matmul(attention_output, weights[weight_keys["output_proj"]].transpose(0, 1))
+
+    return final_attention_output
+
+
+########################################################################
+
+def SDPA(Q, K, V, mask, pdrop):
+    import torch.nn.functional as F
+    query_scores = torch.matmul(Q, K.transpose(-2, -1)) / np.sqrt(Q.size(-1))
+    query_scores.masked_fill_(mask, -1e9) if mask is not None else query_scores
+    softmax_scores = run_softmax(query_scores, dim=-1)
+    dropout_scores = F.dropout(input=softmax_scores, p=pdrop) if pdrop is not None else softmax_scores
+    final_attention_output = torch.matmul(dropout_scores, V)
+    return final_attention_output
 
 
 def run_positionwise_feedforward(
@@ -43,6 +208,12 @@ def run_positionwise_feedforward(
     # You can also manually assign the weights
     # my_ffn.w1.weight.data = weights["w1.weight"]
     # my_ffn.w2.weight.data = weights["w2.weight"]
+
+    import numpy as np
+
+    return positionwise_feedforward(d_model, d_ff, weights, in_features)
+
+
     raise NotImplementedError
 
 
@@ -85,6 +256,9 @@ def run_scaled_dot_product_attention(
         with the output of running your scaled dot product attention
         implementation with the provided key, query, and value tensors.
     """
+
+    return SDPA(Q, K, V, mask, pdrop)
+
     raise NotImplementedError
 
 
@@ -135,6 +309,14 @@ def run_multihead_self_attention(
         torch.FloatTensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
+
+    import torch.nn.functional as F
+
+    #breakpoint()
+
+    return multihead_self_attention(d_model, num_heads, attn_pdrop, weights, in_features)
+        
+
     raise NotImplementedError
 
 
@@ -207,6 +389,15 @@ def run_transformer_block(
         FloatTensor of shape (batch_size, sequence_length, d_model) with the output of
         running the Transformer block on the input features.
     """
+
+    import torch.nn.functional as F
+
+    weight_keys = None
+    return transformer_block(d_model, num_heads, d_ff, attn_pdrop, residual_pdrop, weights, in_features, weight_keys=weight_keys)
+
+    
+
+
     raise NotImplementedError
 
 
@@ -300,6 +491,50 @@ def run_transformer_lm(
         FloatTensor of shape (batch size, sequence_length, vocab_size) with the predicted unnormalized
         next-word distribution for each token.
     """
+
+    import torch.nn.functional as F
+
+
+    
+    #breakpoint()
+    token_embeddings = weights['token_embeddings.weight'][in_indices]
+    position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
+    position_embeddings = weights['position_embeddings.weight'][position_ids]
+    input_embeddings = token_embeddings + position_embeddings
+    input_embeddings = F.dropout(input_embeddings, p=residual_pdrop, inplace=False)
+
+    current_hidden_state = input_embeddings
+    for layer_number in range(num_layers):
+        #breakpoint()
+        weight_keys = {
+            "rms_norm_1": f"layers.{layer_number}.ln1.weight",
+            "rms_norm_2": f"layers.{layer_number}.ln2.weight",
+            "positionwise_feedforward_1": f"layers.{layer_number}.ffn.w1.weight",
+            "positionwise_feedforward_2": f"layers.{layer_number}.ffn.w2.weight",
+            "q_proj": f"layers.{layer_number}.attn.q_proj.weight",
+            "k_proj": f"layers.{layer_number}.attn.k_proj.weight",
+            "v_proj": f"layers.{layer_number}.attn.v_proj.weight",
+            "output_proj": f"layers.{layer_number}.attn.output_proj.weight",
+        }
+        
+        current_hidden_state = transformer_block(d_model=d_model, num_heads=num_heads, d_ff=d_ff, attn_pdrop=attn_pdrop, 
+                                                 residual_pdrop=residual_pdrop, weights=weights, in_features=current_hidden_state, 
+                                                 weight_keys=weight_keys)
+
+    
+    #breakpoint()
+
+    from torch.nn import Linear, Parameter
+    linear_transformation = Linear(d_model, vocab_size)
+    linear_transformation.weight = Parameter(weights['lm_head.weight'])
+
+    rms_norm_output = rmsnorm(d_model=d_model, eps=1e-5, weights=weights, in_features=current_hidden_state, weight_key="ln_final.weight")
+    #linear_output = torch.matmul(rms_norm_output, weights['lm_head.weight'].t())
+    linear_output = linear_transformation(rms_norm_output)
+    softmax_output = run_softmax(linear_output, dim=-1)
+    
+    return softmax_output
+
     raise NotImplementedError
 
 
@@ -307,7 +542,7 @@ def run_rmsnorm(
     d_model: int,
     eps: float,
     weights: dict[str, torch.FloatTensor],
-    in_features: torch.FloatTensor,
+    in_features: torch.FloatTensor
 ) -> torch.FloatTensor:
     """Given the weights of a RMSNorm affine transform,
     return the output of running RMSNorm on the input features.
@@ -331,7 +566,13 @@ def run_rmsnorm(
         FloatTensor of with the same shape as `in_features` with the output of running
         layernorm of the `in_features`.
     """
-    raise NotImplementedError
+    from torch.nn import Parameter
+    
+    return rmsnorm(d_model, eps, weights, in_features)
+
+    breakpoint()
+
+    #raise NotImplementedError
 
 
 def run_gelu(in_features: torch.FloatTensor) -> torch.FloatTensor:
@@ -346,6 +587,12 @@ def run_gelu(in_features: torch.FloatTensor) -> torch.FloatTensor:
         FloatTensor of with the same shape as `in_features` with the output of applying
         GELU to each element.
     """
+    import math 
+    from torch import tanh
+    import numpy as np
+    #breakpoint()
+    
+    return in_features * (0.5) * (1 + torch.erf(in_features / np.sqrt(2)))
     raise NotImplementedError
 
 
@@ -390,6 +637,18 @@ def run_softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
         FloatTensor of with the same shape as `in_features` with the output of
         softmax normalizing the specified `dim`.
     """
+    import numpy as np
+    from torch import exp, max, sum
+
+    output = in_features - max(in_features, dim=dim, 
+                               keepdim=True)[0]
+    divided_output = exp(output) / sum(exp(output), 
+                                       dim=dim, keepdim=True)
+    return divided_output
+
+
+
+
     raise NotImplementedError
 
 
@@ -408,6 +667,10 @@ def run_cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
     Returns:
         Tensor of shape () with the average cross-entropy loss across examples.
     """
+
+    return cross_entropy(inputs, targets)
+
+
     raise NotImplementedError
 
 
@@ -536,7 +799,8 @@ def get_tokenizer(
     Returns:
         A BPE tokenizer that uses the provided vocab, merges, and special tokens.
     """
-    raise NotImplementedError
+    from tests.tokenizer import Tokenizer
+    return Tokenizer(vocab, merges, special_tokens)
 
 
 def run_train_bpe(
@@ -569,4 +833,100 @@ def run_train_bpe(
                 representing that <token1> was merged with <token2>.
                 Merges are ordered by order of creation.
     """
-    raise NotImplementedError
+    
+    #raise NotImplementedError
+
+    from collections import defaultdict, Counter
+    from tqdm import tqdm
+    import regex as re
+    from tests.tokenizer import add_new_tokens, most_common_bp, update_frequencies
+    
+    ###################################################
+
+    vocabulary = {}
+    for i in range(0, 256):
+        vocabulary.update({i: bytes([i])})
+
+    ###################################################
+    
+    starting_vocab_len = len(vocabulary)
+    for special_token_count, token in enumerate(special_tokens) :
+        if token.encode("utf-8") not in vocabulary.values():
+            vocabulary.update({special_token_count + starting_vocab_len: token.encode("utf-8")})
+
+    ###################################################
+
+    token_freq = Counter()
+    pretokenization_pattern = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+    
+    print("Loading text!")
+    with open(input_path, 'rb') as f:
+        
+        for line in f.readlines():
+            
+            tokens_converted = []
+            for token in re.findall(pretokenization_pattern, line.decode("utf-8")):
+                if token.encode() not in vocabulary.values():
+                    tokens_converted.append(token.encode())
+
+            ####################
+                    
+            token_freq.update(tokens_converted)
+
+            ####################
+
+            token_mapping = {}
+            for token in token_freq.keys():
+                token_mapping[token] = token
+
+    ###################################################
+
+    pairs_of_bytes = {}
+    byte_pair_freqs = Counter()
+
+    for token, freq in token_freq.items():
+        
+        pairs_of_bytes_in_token = []
+        for curr_token in range(len(token) - 1):
+            current_pair = (token[curr_token], token[curr_token + 1])
+            pairs_of_bytes_in_token.append(current_pair)
+
+        for token_pair in pairs_of_bytes_in_token:
+            pairs_of_bytes = add_new_tokens(token, token_pair, pairs_of_bytes)
+            byte_pair_freqs[token_pair] = byte_pair_freqs[token_pair] + freq
+
+    ###################################################
+
+    merges_overall = []
+    
+    print("Performing merges!")
+    for merge_count in tqdm(range(len(vocabulary), vocab_size)):
+
+        most_common_pair = most_common_bp(vocabulary, byte_pair_freqs)
+
+        vocabulary[len(vocabulary)] = (vocabulary[most_common_pair[0]] + vocabulary[most_common_pair[1]])
+        merges_overall.append((vocabulary[most_common_pair[0]], vocabulary[most_common_pair[1]]))
+
+        byte_pair_freqs[most_common_pair] = 0
+        for word_token in pairs_of_bytes[most_common_pair]:
+
+            final_merged_token = list(token_mapping[word_token],)
+            count = 0
+            while count < len(final_merged_token) - 1: 
+
+                token_1, token_2 = final_merged_token[count], final_merged_token[count + 1]
+
+                if not (token_1, token_2) == most_common_pair:
+                    count += 1
+                else:
+                    final_merged_token = final_merged_token[:count] + [len(vocabulary) - 1] + final_merged_token[count + 2:]
+
+            token_mapping[word_token] = final_merged_token
+
+            new_id_for_merged_token = len(vocabulary) - 1
+            byte_pair_freqs, pairs_of_bytes = update_frequencies(new_id_for_merged_token, final_merged_token, token_freq, byte_pair_freqs, 
+                                                                 pairs_of_bytes, word_token, most_common_pair[0], most_common_pair[1])
+
+    return vocabulary, merges_overall
+
+
