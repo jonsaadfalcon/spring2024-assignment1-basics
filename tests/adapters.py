@@ -840,7 +840,7 @@ def run_train_bpe(
     from collections import defaultdict, Counter
     from tqdm import tqdm
     import regex as re
-    from tokenizer import add_new_tokens, most_common_bp, update_frequencies
+    from tests.tokenizer import add_new_tokens, most_common_bp, update_frequencies
     
     ###################################################
 
