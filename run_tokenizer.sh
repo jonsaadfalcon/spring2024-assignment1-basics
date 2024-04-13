@@ -5,8 +5,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=30G
 #SBATCH --time=48:00:00
-#SBATCH --output=hello_batch_%j.out
-#SBATCH --error=hello_batch_%j.err
+#SBATCH --output=hello_batch_v2_%j.out
+#SBATCH --error=hello_batch_v2_%j.err
 
 # Optional: activate a conda environment to use for this job
 # eval "$(conda shell.bash hook)"
