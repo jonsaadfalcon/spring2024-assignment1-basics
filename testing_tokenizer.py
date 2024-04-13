@@ -3,8 +3,8 @@ from tests.adapters import run_train_bpe
 import json
 import os
 
-#dataset = "TinyStoriesV2-GPT4-train"
-dataset = "owt_train"
+dataset = "TinyStoriesV2-GPT4-train"
+#dataset = "owt_train"
 
 if not os.path.exists(f"data/{dataset}"):
     os.makedirs(f"data/{dataset}")
