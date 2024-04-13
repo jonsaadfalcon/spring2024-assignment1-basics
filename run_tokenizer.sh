@@ -12,4 +12,4 @@
 # eval "$(conda shell.bash hook)"
 # conda activate cs336_basics
 
-nohup python3 testing_tokenizer.py &> logs/owl_training.log &
+nohup python3 testing_tokenizer.py &> logs/tiny-stories_training.log &
