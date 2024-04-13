@@ -34,7 +34,8 @@ with open(f"data/{dataset}vocabulary.json", 'w', encoding='utf-8') as file:
 
 #breakpoint()
 
-with open(f"data/{dataset}/merges_overall.json", 'wb') as file:
-    # Write each byte sequence to the file
-    for byte_sequence in merges_overall:
-        file.write(byte_sequence + b'\n')
+# Convert bytes in tuples to base64 strings for JSON serialization
+encoded_tuples = [(base64.b64encode(item[0]).decode('utf-8'), base64.b64encode(item[1]).decode('utf-8')) for item in merges_overall]
+
+with open(f"data/{dataset}/merges_overall.json", 'w', encoding='utf-8') as f:
+    json.dump(encoded_tuples, f, indent=4)
