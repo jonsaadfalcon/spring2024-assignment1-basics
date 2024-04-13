@@ -40,3 +40,8 @@ encoded_tuples = [(base64.b64encode(item[0]).decode('utf-8'), base64.b64encode(i
 
 with open(f"data/{dataset}/merges_overall.json", 'w', encoding='utf-8') as f:
     json.dump(encoded_tuples, f, indent=4)
+
+#######################################################
+
+longest_token = max(vocabulary.values(), key=lambda x: len(x) if hasattr(x, '__len__') else 0)
+print("The longest value in the dictionary is:", longest_token)
