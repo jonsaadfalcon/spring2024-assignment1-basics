@@ -125,12 +125,14 @@ class Tokenizer():
 
     ############################################################
     
+    @classmethod
     def from_files(cls, vocab_filepath: str, merges_filepath: str, special_tokens: Optional[List[str]] = None):
         
         vocabulary = {}
         with open(vocab_filepath, encoding='utf-8') as vocab_file:
             for row, line in enumerate(vocab_file):
-                vocabulary[line.strip()] = row
+                key, value = line.strip().split(': ')
+                vocabulary[key] = value#.replace(" ", "")
 
         with open(merges_filepath, encoding='utf-8') as merges_file:
             for line in merges_file:
@@ -139,35 +141,86 @@ class Tokenizer():
         return cls(vocabulary, merges, special_tokens)
     
     ############################################################
-    
-    def apply_merge_to_token(self, token_id_sequence, merge_pair, vocabulary) -> List[int]:
-        
+
+    def update_next_merge(self, merged_token):
+
         count = 0
-        while count < len(token_id_sequence) - 1:
 
-            if (self.inverse_vocab[merge_pair[0]], self.inverse_vocab[merge_pair[1]]) == (token_id_sequence[count], token_id_sequence[count + 1]):
-                token_id_sequence = token_id_sequence[:count] + [self.inverse_vocab[merge_pair[0] + merge_pair[1]]] + token_id_sequence[count + 2:]
-            else:
-                count += 1
+        new_merged_token = list(merged_token)
+        merge_choices = []
+        while len(new_merged_token) > count + 1:
 
-        return token_id_sequence
+            token_1 = new_merged_token[count]
+            token_2 = new_merged_token[count + 1]
+
+            ########
+
+            #breakpoint()
+
+            if (self.vocabulary[token_1], self.vocabulary[token_2]) in self.merges:
+                merge_choices.append({
+                    "token_1": token_1,
+                    "token_2": token_2,
+                    "count": count,
+                    "select_merge": self.merges[(self.vocabulary[token_1], 
+                                                 self.vocabulary[token_2])]
+                })
+
+            ########
+
+            count += 1
+
+        #breakpoint()
+
+        #################################################
+            
+        count_merges = 0 
+        if len(merge_choices) > 0:
+
+            minimum_merge_choice = min(merge_choices, key=lambda x: x["select_merge"])
+            
+            new_merged_token = new_merged_token[:minimum_merge_choice["count"]] + [self.inverse_vocab[self.vocabulary[minimum_merge_choice["token_1"]]+self.vocabulary[minimum_merge_choice["token_2"]]]] + new_merged_token[minimum_merge_choice["count"] + 2:]
+            
+            count_merges = count_merges + 1
+
+            #breakpoint()
+        
+        return new_merged_token, count_merges
     
     ############################################################
     
-    def apply_BPE_merges(self, token: str, merges, vocab) -> List[int]:
+    def merge_tokens(self, token_id_sequence):
+        
+        updated_tokens = token_id_sequence.copy()
+        num_merges = -1
+
+        while num_merges != 0:
+            updated_tokens, num_merges = self.update_next_merge(updated_tokens)
+        
+        return updated_tokens
+    
+    ############################################################
+    
+    def apply_BPE_merges(self, token, merges, vocab):
         
         token_id_sequence = []
 
         if token not in self.special_tokens:
             for token_character in token:
                 for token_byte in token_character.encode('utf-8'):
-                    token_id_sequence.append(self.inverse_vocab[bytes([token_byte])])
+                    try:
+                        token_id_sequence.append(self.inverse_vocab[(bytes([token_byte]))])
+                    except:
+                        #breakpoint()
+                        token_id_sequence.append(self.inverse_vocab[str(bytes([token_byte]))])
         
         merged_id = token_id_sequence.copy()
-        for merge_pair in merges:
-            merged_id = self.apply_merge_to_token(merged_id, merge_pair, vocab)
+        for _ in merges:
+            merged_id = self.merge_tokens(merged_id)
         
         return merged_id
+    
+    ############################################################
 
     def tokenize(self, text):
         

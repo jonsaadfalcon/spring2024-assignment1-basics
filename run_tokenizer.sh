@@ -6,7 +6,7 @@
 #SBATCH --mem=100G
 #SBATCH --time=6:00:00
 #SBATCH --output=outputs/hello_batch_v2.1_%j.out
-#SBATCH --error=outputs/hello_batch_v2.1_%j.err
+#SBATCH --error=errors/hello_batch_v2.1_%j.err
 
 # Optional: activate a conda environment to use for this job
 # eval "$(conda shell.bash hook)"
