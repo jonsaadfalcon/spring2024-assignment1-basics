@@ -32,7 +32,7 @@ with open(f"data/{dataset}vocabulary.json", 'w', encoding='utf-8') as file:
 #with open(f"data/{dataset}/merges_overall.json", "w") as f:
 #    json.dump(merges_overall, f)
 
-breakpoint()
+#breakpoint()
 
 with open(f"data/{dataset}/merges_overall.json", 'wb') as file:
     # Write each byte sequence to the file
