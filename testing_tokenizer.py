@@ -10,11 +10,21 @@ if not os.path.exists(f"data/{dataset}"):
 
 vocabulary, merges_overall = run_train_bpe(f"data/{dataset}.txt", 10000, ["<|endoftext|>"])
     
-breakpoint()
+#breakpoint()
 
 # Save vocabulary to json file
-with open(f"data/{dataset}vocabulary.json", "w") as f:
-    json.dump(vocabulary, f)
+#with open(f"data/{dataset}vocabulary.json", "w") as f:
+#    json.dump(vocabulary, f)
+
+import base64
+int_to_bytes_dict = {}
+for key, value in int_to_bytes_dict.items():
+    # Convert bytes to base64 encoded string
+    int_to_bytes_dict[key] = base64.b64encode(value).decode('utf-8')
+
+# Save the dictionary to a JSON file
+with open(f"data/{dataset}vocabulary.json", 'w', encoding='utf-8') as file:
+    json.dump(int_to_bytes_dict, file, indent=4)
 
 # Save merges_overall to json file
 with open(f"data/{dataset}/merges_overall.json", "w") as f:
