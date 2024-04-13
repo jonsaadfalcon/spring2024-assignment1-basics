@@ -2,8 +2,8 @@
 #SBATCH --job-name=test_hello_batch
 #SBATCH --partition=batch
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=100G
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=30G
 #SBATCH --time=48:00:00
 #SBATCH --output=hello_batch_%j.out
 #SBATCH --error=hello_batch_%j.err
