@@ -1,6 +1,9 @@
 
-from typing import Iterable, List, Optional
+import json 
 import regex as re
+from tqdm import tqdm
+from typing import Iterable, List, Optional
+import base64
 
 ############################################################
 
@@ -106,8 +109,15 @@ class Tokenizer():
         self.merges = {}
         for count, merge in enumerate(merges):
             self.merges.update({tuple(merge): count})
+
+        #with open(bytes_file, 'r', encoding='utf-8') as f:
+        #    loaded_encoded_tuples = json.load(f)
+        #decoded_tuples = [(base64.b64decode(item[0]), base64.b64decode(item[1])) for item in loaded_encoded_tuples]
         
         self.vocabulary = vocabulary.copy()
+        #with open(vocab_file, 'rb') as file:
+        #    file_content = file.read()
+        #bytes_list = file_content.strip().split(b'\n')
 
         self.inverse_vocab = {}
         for k, v in self.vocabulary.items():
