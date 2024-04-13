@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #SBATCH --job-name=test_hello_batch
 #SBATCH --partition=batch
