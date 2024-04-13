@@ -494,8 +494,6 @@ def run_transformer_lm(
 
     import torch.nn.functional as F
 
-
-    
     #breakpoint()
     token_embeddings = weights['token_embeddings.weight'][in_indices]
     position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
@@ -530,10 +528,11 @@ def run_transformer_lm(
 
     rms_norm_output = rmsnorm(d_model=d_model, eps=1e-5, weights=weights, in_features=current_hidden_state, weight_key="ln_final.weight")
     #linear_output = torch.matmul(rms_norm_output, weights['lm_head.weight'].t())
-    linear_output = linear_transformation(rms_norm_output)
-    softmax_output = run_softmax(linear_output, dim=-1)
+    linear_output = torch.nn.functional.linear(rms_norm_output, weights['lm_head.weight'])
+    #softmax_output = run_softmax(linear_output, dim=-1)
     
-    return softmax_output
+    
+    return linear_output
 
     raise NotImplementedError
 
@@ -693,7 +692,9 @@ def get_adamw_cls() -> Type[torch.optim.Optimizer]:
     """
     Returns a torch.optim.Optimizer that implements AdamW.
     """
-    raise NotImplementedError
+    from tests.optimizer import AdamW
+    return AdamW
+    #raise NotImplementedError
 
 
 def run_get_lr_cosine_schedule(
