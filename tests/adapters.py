@@ -863,7 +863,7 @@ def run_train_bpe(
     print("Loading text!")
     with open(input_path, 'rb') as f:
         
-        for line in f.readlines():
+        for line in tqdm(f.readlines()):
             
             tokens_converted = []
             for token in re.findall(pretokenization_pattern, line.decode("utf-8")):
@@ -885,7 +885,8 @@ def run_train_bpe(
     pairs_of_bytes = {}
     byte_pair_freqs = Counter()
 
-    for token, freq in token_freq.items():
+    print("Gathering frequencies!")
+    for token, freq in tqdm(token_freq.items()):
         
         pairs_of_bytes_in_token = []
         for curr_token in range(len(token) - 1):
