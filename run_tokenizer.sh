@@ -3,6 +3,7 @@
 #SBATCH --partition=batch
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
+#SBATCH --mem=100G
 #SBATCH --time=12:00:00
 #SBATCH --output=hello_batch_v2_%j.out
 #SBATCH --error=hello_batch_v2_%j.err
