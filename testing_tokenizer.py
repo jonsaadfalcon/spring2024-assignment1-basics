@@ -9,6 +9,7 @@ dataset = "TinyStoriesV2-GPT4-train"
 if not os.path.exists(f"data/{dataset}"):
     os.makedirs(f"data/{dataset}")
 
+print(f"Dataset: {dataset}")
 vocabulary, merges_overall = run_train_bpe(f"data/{dataset}.txt", 10000, ["<|endoftext|>"])
     
 #######################################################
