@@ -541,7 +541,10 @@ class Transformer_LM(nn.Module):
 
         if labels is not None:
             loss = cross_entropy(linear_output, labels)
-            return loss
+            return {
+                        "loss": loss,
+                        "logits": linear_output
+            }
         else:
             return linear_output
     
