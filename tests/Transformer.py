@@ -246,26 +246,30 @@ class positionwise_feedforward_params(nn.Module):
         weights: dict[str, torch.FloatTensor],
         weight_1="w1.weight",
         weight_2="w2.weight",
+        device: str="cuda:0",
     ) -> torch.FloatTensor:
         
         super(positionwise_feedforward_params, self).__init__()
         
         self.d_model = d_model
         self.dff = d_ff
+        self.device = torch.device(device)
+
+        self.w1_weights = Parameter(torch.randn(d_ff, d_model)).to(self.device)
+        self.w2_weights = Parameter(torch.randn(d_model, d_ff)).to(self.device)
+
         if weights is not None:
-            self.w1_weights = weights[weight_1]
-            self.w2_weights = weights[weight_2]
-        else:
-            self.w1_weights = Parameter(torch.randn(d_ff, d_model))
-            self.w2_weights = Parameter(torch.randn(d_model, d_ff))
+            self.w1_weights.weights = weights[weight_1]
+            self.w2_weights.weights = weights[weight_2]
+            
 
     ########################################################
 
     def perform_positionwise_feedforward(self, in_features: torch.FloatTensor):
 
-        first_linear_transformation_output = in_features @ self.w1_weights.t()
+        first_linear_transformation_output = self.w1_weights(in_features)
         first_linear_transformation_output = gelu(first_linear_transformation_output)
-        output = first_linear_transformation_output @ self.w2_weights.t()
+        output = self.w2_weights(first_linear_transformation_output)
         
         return output
     
@@ -280,6 +284,7 @@ class multihead_self_attention_params(nn.Module):
         attn_pdrop: float,
         weights: dict[str, torch.FloatTensor] | None,
         weight_keys: dict[str, str] | None,
+        device: str="cuda:0",
     ) -> torch.FloatTensor:
         
         super(multihead_self_attention_params, self).__init__()
@@ -289,17 +294,18 @@ class multihead_self_attention_params(nn.Module):
         self.attn_pdrop = attn_pdrop
         self.weights = weights
         self.weight_keys = weight_keys
+        self.device = torch.device(device)
+
+        self.Q_weights = Parameter(torch.randn(self.d_model, self.d_model)).to(self.device)
+        self.K_weights = Parameter(torch.randn(self.d_model, self.d_model)).to(self.device)
+        self.V_weights = Parameter(torch.randn(self.d_model, self.d_model)).to(self.device)
+        self.output_proj = Parameter(torch.randn(self.d_model, self.d_model)).to(self.device)
 
         if weights is not None:
-            self.Q_weights = weights[weight_keys["q_proj"]]
-            self.K_weights = weights[weight_keys["k_proj"]] 
-            self.V_weights = weights[weight_keys["v_proj"]]
-            self.output_proj = weights[weight_keys["output_proj"]]
-        else:
-            self.Q_weights = Parameter(torch.randn(self.d_model, self.d_model))
-            self.K_weights = Parameter(torch.randn(self.d_model, self.d_model))
-            self.V_weights = Parameter(torch.randn(self.d_model, self.d_model))
-            self.output_proj = Parameter(torch.randn(self.d_model, self.d_model))
+            self.Q_weights.weights = weights[weight_keys["q_proj"]]
+            self.K_weights.weights = weights[weight_keys["k_proj"]] 
+            self.V_weights.weights = weights[weight_keys["v_proj"]]
+            self.output_proj.weights = weights[weight_keys["output_proj"]]
 
     ########################################
 
@@ -316,9 +322,12 @@ class multihead_self_attention_params(nn.Module):
 
         ########################################
 
-        query_output = torch.matmul(in_features, self.Q_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-        key_output = torch.matmul(in_features, self.K_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-        value_output = torch.matmul(in_features, self.V_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        #query_output = torch.matmul(in_features, self.Q_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        #key_output = torch.matmul(in_features, self.K_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        #value_output = torch.matmul(in_features, self.V_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        query_output = self.Q_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        key_output = self.K_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        value_output = self.V_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
 
         ########################################
 
@@ -326,7 +335,8 @@ class multihead_self_attention_params(nn.Module):
         attention_output = SDPA(query_output, key_output, value_output, 
                                 mask, pdrop=attn_pdrop)
         attention_output = attention_output.transpose(1, 2).contiguous().view(batch_size, -1, d_model)
-        final_attention_output = torch.matmul(attention_output, self.output_proj.transpose(0, 1))
+        #final_attention_output = torch.matmul(attention_output, self.output_proj.transpose(0, 1))
+        final_attention_output = self.output_proj(attention_output)
 
         ########################################
 
@@ -341,7 +351,8 @@ class rmsnorm_params(nn.Module):
         d_model: int,
         eps: float,
         weights: dict[str, torch.FloatTensor] | None,
-        weight_key="weight"
+        weight_key="weight",
+        device: str="cuda:0",
     ) -> torch.FloatTensor:
         
         super(rmsnorm_params, self).__init__()
@@ -349,18 +360,18 @@ class rmsnorm_params(nn.Module):
         self.eps = eps
         self.weights = weights
         self.d_model = d_model
+        self.device = torch.device(device)
 
         if self.weights is not None:
-            self.rmsnorm = Parameter(weights[weight_key])
+            self.rmsnorm = Parameter(weights[weight_key]).to(self.device)
         else:
-            self.rmsnorm = Parameter(torch.randn(self.d_model))
+            self.rmsnorm = Parameter(torch.randn(self.d_model)).to(self.device)
 
     def perform_rmsnorm(self, in_features: torch.FloatTensor):
     
         current_state = torch.sqrt(self.eps + torch.mean(in_features ** 2, dim=-1, keepdim=True))
 
         features_normalized = in_features / current_state
-        breakpoint()
         final_output = self.rmsnorm * features_normalized
         
         return final_output
@@ -371,7 +382,7 @@ import torch.nn as nn
 class transformer_block_params(nn.Module):
 
     def __init__(self, d_model:int, num_heads:int, d_ff:int, attn_pdrop:float, residual_pdrop:float, 
-                 weights:dict[str, torch.FloatTensor], weight_keys: dict[str, str], eps: float=1e-5):
+                 weights:dict[str, torch.FloatTensor], weight_keys: dict[str, str], eps: float=1e-5, device:str="cuda:0"):
         
         super(transformer_block_params, self).__init__()
         
@@ -384,12 +395,14 @@ class transformer_block_params(nn.Module):
         self.weights_keys = weight_keys
         self.eps = eps
 
+        self.device = torch.device(device)
+
         #breakpoint()
 
-        self.first_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=weight_keys["rms_norm_1"])
-        self.multihead_self_attention = multihead_self_attention_params(d_model=self.d_model, num_heads=self.num_heads, attn_pdrop=self.attn_pdrop, weights=self.weights, weight_keys=weight_keys)
-        self.second_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=weight_keys["rms_norm_2"])
-        self.positionwise_feedforward = positionwise_feedforward_params(d_model=self.d_model, d_ff=self.d_ff, weights=self.weights, weight_1=weight_keys["positionwise_feedforward_1"], weight_2=weight_keys["positionwise_feedforward_2"])
+        self.first_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=weight_keys["rms_norm_1"], device=device)
+        self.multihead_self_attention = multihead_self_attention_params(d_model=self.d_model, num_heads=self.num_heads, attn_pdrop=self.attn_pdrop, weights=self.weights, weight_keys=weight_keys, device=device)
+        self.second_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=weight_keys["rms_norm_2"], device=device)
+        self.positionwise_feedforward = positionwise_feedforward_params(d_model=self.d_model, d_ff=self.d_ff, weights=self.weights, weight_1=weight_keys["positionwise_feedforward_1"], weight_2=weight_keys["positionwise_feedforward_2"], device=device)
 
     ################################################
 
@@ -426,6 +439,7 @@ class Transformer_LM(nn.Module):
         eps: float=1e-5,
         #in_indices: torch.LongTensor,
         #weight_keys: dict[str, str] | None,
+        device: str = "cuda:0"
     ):
         
         super(Transformer_LM, self).__init__()
@@ -442,18 +456,19 @@ class Transformer_LM(nn.Module):
         self.eps = eps
         #self.in_indices = in_indices
         #self.weights_keys = weight_keys
+        self.device = torch.device(device)
 
         ########################
 
         if self.weights is not None:
-            self.token_embeddings = Embedding(self.vocab_size, self.d_model)
+            self.token_embeddings = Embedding(self.vocab_size, self.d_model).to(self.device)
             self.token_embeddings.weights = weights['token_embeddings.weight']
-            self.position_embeddings = Embedding(self.context_length, self.d_model)
+            self.position_embeddings = Embedding(self.context_length, self.d_model).to(self.device)
             self.position_embeddings.weights = weights['token_embeddings.weight']
         else:
-            self.token_embeddings = Embedding(self.vocab_size, self.d_model)
+            self.token_embeddings = Embedding(self.vocab_size, self.d_model).to(self.device)
             self.token_embeddings.weights = Parameter(torch.randn(self.vocab_size, self.d_model))
-            self.position_embeddings = Embedding(self.context_length, self.d_model)
+            self.position_embeddings = Embedding(self.context_length, self.d_model).to(self.device)
             self.position_embeddings.weights = Parameter(torch.randn(self.context_length, self.d_model))
 
         ########################
@@ -471,17 +486,17 @@ class Transformer_LM(nn.Module):
                 "output_proj": f"layers.{layer_number}.attn.output_proj.weight",
             }
             self.transformer_blocks.append(transformer_block_params(d_model=self.d_model, num_heads=self.num_heads, d_ff=self.d_ff, attn_pdrop=self.attn_pdrop, 
-                                                                    residual_pdrop=self.residual_pdrop, weights=self.weights, weight_keys=weight_keys, eps=self.eps))
+                                                                    residual_pdrop=self.residual_pdrop, weights=self.weights, weight_keys=weight_keys, eps=self.eps, device=device))
 
         ########################
 
-        self.final_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key="ln_final.weight")
+        self.final_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key="ln_final.weight", device=device)
         
         if self.weights is not None:
-            self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False)
+            self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False).to(self.device)
             self.linear_transformation.weight = Parameter(self.weights['lm_head.weight'])
         else:
-            self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False)
+            self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False).to(self.device)
 
 
     ################################################
