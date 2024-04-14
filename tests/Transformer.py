@@ -354,7 +354,7 @@ class rmsnorm_params(nn.Parameter):
 ########################################################
 
 import torch.nn as nn
-class Transformer_Block(nn.Module):
+class transformer_block_params(nn.Module):
 
     def __init__(self, d_model:int, num_heads:int, d_ff:int, attn_pdrop:float, residual_pdrop:float, 
                  weights:dict[str, torch.FloatTensor], weight_keys: dict[str, str], eps: float=1e-5):
@@ -373,7 +373,7 @@ class Transformer_Block(nn.Module):
         self.second_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=self.weight_keys["rms_norm_2"])
         self.positionwise_feedforward = positionwise_feedforward_params(d_model=self.d_model, d_ff=self.d_ff, weights=self.weights, weight_1=self.weight_keys["positionwise_feedforward_1"], weight_2=self.weight_keys["positionwise_feedforward_2"])
         
-        super(transformer_block, self).__init__()
+        super(transformer_block_params, self).__init__()
 
     ################################################
 
@@ -442,8 +442,8 @@ class Transformer_LM(nn.Module):
                 "v_proj": f"layers.{layer_number}.attn.v_proj.weight",
                 "output_proj": f"layers.{layer_number}.attn.output_proj.weight",
             }
-            self.transformer_blocks.append(Transformer_Block(d_model=self.d_model, num_heads=self.num_heads, d_ff=self.d_ff, attn_pdrop=self.attn_pdrop, 
-                                                             residual_pdrop=self.residual_pdrop, weights=self.weights, weight_keys=weight_keys, eps=self.eps))
+            self.transformer_blocks.append(transformer_block_params(d_model=self.d_model, num_heads=self.num_heads, d_ff=self.d_ff, attn_pdrop=self.attn_pdrop, 
+                                                                    residual_pdrop=self.residual_pdrop, weights=self.weights, weight_keys=weight_keys, eps=self.eps))
 
         self.final_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key="ln_final.weight")
         self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False)
