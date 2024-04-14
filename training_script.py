@@ -25,6 +25,7 @@ def train(model, device, train_loader, optimizer, epoch):
     for batch_idx, batch in enumerate(train_loader):
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
+        breakpoint()
         outputs = model(input_ids, attention_mask=attention_mask, labels=input_ids)  # Assuming MLM task
         loss = outputs.loss
         loss.backward()
