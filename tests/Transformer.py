@@ -18,7 +18,12 @@ from torch import tensor, long, mean
 
 def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
 
-    breakpoint()
+    #breakpoint()
+
+    if len(inputs.shape) == 3:
+        inputs = inputs.view(-1, inputs.size(-1))
+
+    assert inputs.size(0) == targets.size(1)
     
     stable_logits = inputs - torch.max(inputs, dim=1, keepdim=True)[0]
     sum_logits = torch.sum(torch.exp(stable_logits), dim=1)
