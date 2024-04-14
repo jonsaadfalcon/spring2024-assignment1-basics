@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 
 from tests.Transformer import transformer_block, cross_entropy, rmsnorm, positionwise_feedforward
-from tests.Transformer import multihead_self_attention, SDPA, multihead_self_attention, gelu
+from tests.Transformer import multihead_self_attention, SDPA, multihead_self_attention, gelu, load_batch
 
 
 ########################################################################
@@ -467,25 +467,8 @@ def run_get_batch(
     """
 
     #raise NotImplementedError
-
-    # Sample random starting indices for each batch
-    start_indices = np.random.randint(0, len(dataset) - context_length, batch_size)
     
-    # Initialize empty arrays for input sequences and targets
-    input_sequences = np.zeros((batch_size, context_length), dtype=np.int64)
-    targets = np.zeros((batch_size, context_length), dtype=np.int64)
-    
-    # Populate input sequences and targets
-    for i, start_index in enumerate(start_indices):
-        end_index = start_index + context_length
-        input_sequences[i] = dataset[start_index:end_index]
-        targets[i] = dataset[start_index+1:end_index+1]
-    
-    # Convert numpy arrays to torch tensors
-    input_sequences = torch.tensor(input_sequences, dtype=torch.long, device=device)
-    targets = torch.tensor(targets, dtype=torch.long, device=device)
-    
-    return input_sequences, targets
+    return load_batch(dataset, batch_size, context_length, device)
 
 
 def run_softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
