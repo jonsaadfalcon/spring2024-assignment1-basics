@@ -303,7 +303,8 @@ class Tokenizer():
         
         decoded_text = []
         for token_id in tokens:
-            token_text = self.vocabulary[token_id].replace("b'", "").replace("'", "")
+            token_text = self.vocabulary[token_id]
+            token_text = token_text[2:-1]
             decoded_text.append(token_text)
         decoded_text = ("").join(decoded_text)
         return decoded_text
