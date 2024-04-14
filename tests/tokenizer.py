@@ -298,6 +298,8 @@ class Tokenizer():
         if type(tokens) is not list:
             tokens = tokens.tolist()
         assert type(tokens[0]) == int
+
+        breakpoint()
         
         decoded_text = []
         for token_id in tokens:
