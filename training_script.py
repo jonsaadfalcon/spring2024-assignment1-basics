@@ -55,7 +55,11 @@ def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3)
             optimizer.step()
             optimizer.zero_grad()
 
-            optimizer.defaults["lr"] = get_lr_cosine_schedule(it=idx, max_learning_rate=5e-5, total_steps=len(loader) * epochs)
+            optimizer.defaults["lr"] = get_lr_cosine_schedule(it=idx, 
+                                                              max_learning_rate=learning_scheduler_config['max_learning_rate'],
+                                                              min_learning_rate=learning_scheduler_config['min_learning_rate'],
+                                                              warmup_iters=learning_scheduler_config['warmup_iters'],
+                                                              cosine_cycle_iters=learning_scheduler_config['cosine_cycle_iters'])
 
             if idx % 10 == 0:  # log every 10 batches
                 wandb.log({"loss": loss.item()})
@@ -85,7 +89,7 @@ def main():
         "cosine_cycle_iters": 10000
     }
 
-    #########################
+    ##################################################
 
     tokenizer = Tokenizer.from_files(vocab_filepath='tokenizer_saved/ts_vocab.txt',
                                      merges_filepath='tokenizer_saved/ts_merges.txt', 
@@ -95,7 +99,7 @@ def main():
     dataset = TextDataset(file_path, tokenizer, block_size=model_config["context_length"])
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 
-    #########################
+    ##################################################
 
     #print("dataset examples:" + str(dataset.examples))
 
@@ -112,9 +116,16 @@ def main():
                             residual_pdrop = model_config["residual_pdrop"],
                             weights = model_config["weights"],)
     model.to(device)
-    #breakpoint()
+    
+    ##################################################
+    
     #optimizer = AdamW(model.parameters(), lr=5e-5)
     optimizer = AdamW(model.parameters(), lr=learning_scheduler_config["max_learning_rate"])
+    optimizer.defaults["lr"] = get_lr_cosine_schedule(it=0, 
+                                                      max_learning_rate=learning_scheduler_config['max_learning_rate'],
+                                                      min_learning_rate=learning_scheduler_config['min_learning_rate'],
+                                                      warmup_iters=learning_scheduler_config['warmup_iters'],
+                                                      cosine_cycle_iters=learning_scheduler_config['cosine_cycle_iters'])
 
     epochs = 3
     train(model, device, data_loader, optimizer, 
