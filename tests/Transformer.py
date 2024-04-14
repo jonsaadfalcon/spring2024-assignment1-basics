@@ -411,6 +411,8 @@ class Transformer_LM(nn.Module):
         #in_indices: torch.LongTensor,
         #weight_keys: dict[str, str] | None,
     ):
+        
+        super(Transformer_LM, self).__init__()
 
         self.vocab_size = vocab_size
         self.context_length = context_length
@@ -447,7 +449,6 @@ class Transformer_LM(nn.Module):
         self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False)
         self.linear_transformation.weight = Parameter(self.weights['lm_head.weight'])
 
-        super(Transformer_LM, self).__init__()
 
     ################################################
 
