@@ -11,6 +11,7 @@ class TextDataset(Dataset):
         
         self.examples = []
 
+        print("Loading training text!")
         with open(file_path, 'rb') as f:
     
             for line in tqdm(f.readlines()[1000:1010]):
