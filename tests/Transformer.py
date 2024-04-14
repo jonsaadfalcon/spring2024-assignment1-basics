@@ -443,8 +443,15 @@ class Transformer_LM(nn.Module):
         #self.weights_keys = weight_keys
 
         if self.weights is not None:
+
+            self.token_embeddings = Linear(self.vocab_size, self.d_model, bias=False)
+            self.token_embeddings.weight = Parameter(self.weights['token_embeddings.weight'])
             self.token_embeddings = Parameter(self.weights['token_embeddings.weight'])
+
+            self.position_embeddings = Linear(self.context_length, self.d_model, bias=False)
+            self.position_embeddings.weight = Parameter(self.weights['position_embeddings.weight'])
             self.position_embeddings = Parameter(self.weights['position_embeddings.weight'])
+            
         else:
             self.token_embeddings = Parameter(torch.randn(self.vocab_size, self.d_model))
             self.position_embeddings = Parameter(torch.randn(self.context_length, self.d_model))
