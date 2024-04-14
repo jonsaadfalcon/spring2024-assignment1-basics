@@ -5,16 +5,16 @@ import wandb
 
 class TextDataset(Dataset):
     def __init__(self, file_path, tokenizer, block_size=128):
-        
+
         #with open(file_path, 'r', encoding='utf-8') as f:
         #    lines = f.readlines()
 
-        #self.examples = []
-        #for line in lines:
-        #    tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(line))
-        #    for i in range(0, len(tokens) - block_size + 1, block_size):  # Overlap is possible
-        #        self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
-        self.examples = ["Hello, world!", "Transformers are models.", "This is a sample dataset."]
+        self.examples = []
+        lines = ["Hello, world!", "Transformers are models.", "This is a sample dataset."]
+        for line in lines:
+            tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(line))
+            for i in range(0, len(tokens) - block_size + 1, block_size):  # Overlap is possible
+                self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
 
     def __len__(self):
         return len(self.examples)
@@ -38,7 +38,7 @@ def train(model, device, loader, optimizer):
                 print(f"Epoch: {epoch}, Loss: {loss.item()}")
 
 def main():
-    wandb.init(project="gpt2-pretraining", entity="your_username")
+    wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
 
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
     model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
