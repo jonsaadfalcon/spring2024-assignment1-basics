@@ -97,7 +97,7 @@ def main():
         "attn_pdrop": 0.1,
         "residual_pdrop": 0.1,
         "weights": None, #torch.load("tests/fixtures/transformer_lm_weights.pt"),
-        "save_path": "transformer_saved/transformer_lm_weights.pt"
+        "save_path": "transformers_saved/testing/"
     }
 
     learning_scheduler_config = {
@@ -136,6 +136,11 @@ def main():
                             residual_pdrop = model_config["residual_pdrop"],
                             weights = model_config["weights"],)
     model.to(device)
+    
+    ##################################################
+    
+    if not os.path.exists(f"data/{dataset}"):
+        os.makedirs(f"data/{dataset}")
     
     ##################################################
     
