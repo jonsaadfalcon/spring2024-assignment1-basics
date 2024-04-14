@@ -333,7 +333,7 @@ class multihead_self_attention_params(nn.Module):
 
         mask = torch.triu(torch.ones(seq_length, seq_length), diagonal=1) > 0
         attention_output = SDPA(query_output, key_output, value_output, 
-                                mask, pdrop=attn_pdrop)
+                                mask.to(self.device), pdrop=attn_pdrop)
         attention_output = attention_output.transpose(1, 2).contiguous().view(batch_size, -1, d_model)
         final_attention_output = torch.matmul(attention_output, self.output_proj.transpose(0, 1))
         #final_attention_output = self.output_proj(attention_output)
