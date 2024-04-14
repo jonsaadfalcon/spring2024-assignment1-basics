@@ -58,15 +58,15 @@ def main():
 
     model_config = {
         "name:": "testing_transformer",
-        "vocab_size": 100,
-        "context_length": 64,
-        "num_layers": 2,
-        "d_model": 128,
-        "num_heads": 2,
-        "d_ff": 512,
-        "attn_pdrop": 0.0,
-        "residual_pdrop": 0.0,
-        "weights": torch.load("tests/fixtures/transformer_lm_weights.pt"),
+        "vocab_size": 50257,
+        "context_length": 64, #1024
+        "num_layers": 36,
+        "d_model": 1280,
+        "num_heads": 20,
+        "d_ff": 6400,
+        "attn_pdrop": 0.1,
+        "residual_pdrop": 0.1,
+        "weights": None, #torch.load("tests/fixtures/transformer_lm_weights.pt"),
         "save_path": "transformer_saved/transformer_lm_weights.pt"
     }
 

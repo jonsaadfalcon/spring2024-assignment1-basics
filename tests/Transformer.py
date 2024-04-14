@@ -476,7 +476,8 @@ class Transformer_LM(nn.Module):
     ################################################
 
     def forward(self,
-                in_indices: torch.LongTensor,):
+                in_indices: torch.LongTensor,
+                labels: torch.LongTensor | None = None,):
         
         ########################################################
         
@@ -498,7 +499,13 @@ class Transformer_LM(nn.Module):
 
         linear_output = self.linear_transformation(rms_norm_output)
 
-        return linear_output
+        breakpoint()
+
+        if labels is not None:
+            loss = cross_entropy(linear_output, labels)
+            return loss
+        else:
+            return linear_output
     
     ########################################################
     
