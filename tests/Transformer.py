@@ -553,6 +553,7 @@ class Transformer_LM(nn.Module):
     ########################################################
     
     def save_checkpoint(
+        self,
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         iteration: int,
@@ -569,6 +570,7 @@ class Transformer_LM(nn.Module):
     ################################################
     
     def load_checkpoint(
+        self,
         src: str | os.PathLike | BinaryIO | IO[bytes],
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
