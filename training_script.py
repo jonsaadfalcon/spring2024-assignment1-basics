@@ -45,6 +45,8 @@ def main():
     optimizer = AdamW(model.parameters(), lr=5e-5)
 
     dataset = TextDataset("path_to_your_dataset.txt", tokenizer)
+    #print("dataset: ", str(dataset))
+    breakpoint()
     data_loader = DataLoader(dataset, batch_size=2, shuffle=True)
 
     train(model, torch.device("cuda"), data_loader, optimizer)
