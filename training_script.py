@@ -48,6 +48,8 @@ def train(model, device, loader, optimizer):
             loss = outputs.loss
 
             gradient_clipping(model.parameters(), max_l2_norm=1.0)
+
+            breakpoint()
             
             loss.backward()
             optimizer.step()
