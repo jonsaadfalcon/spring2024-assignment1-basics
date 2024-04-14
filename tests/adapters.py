@@ -370,12 +370,13 @@ def run_transformer_lm(
     #breakpoint()
 
     from torch.nn import Linear, Parameter
-    linear_transformation = Linear(d_model, vocab_size)
+    linear_transformation = Linear(d_model, vocab_size, bias=False)
     linear_transformation.weight = Parameter(weights['lm_head.weight'])
 
     rms_norm_output = rmsnorm(d_model=d_model, eps=1e-5, weights=weights, in_features=current_hidden_state, weight_key="ln_final.weight")
     #linear_output = torch.matmul(rms_norm_output, weights['lm_head.weight'].t())
-    linear_output = torch.nn.functional.linear(rms_norm_output, weights['lm_head.weight'])
+    #linear_output = torch.nn.functional.linear(rms_norm_output, weights['lm_head.weight'])
+    linear_output = linear_transformation(rms_norm_output)
     #softmax_output = run_softmax(linear_output, dim=-1)
     
     

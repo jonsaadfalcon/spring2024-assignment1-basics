@@ -56,6 +56,22 @@ def train(model, device, loader, optimizer):
 def main():
     wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
 
+    model_config = {
+        "name:": "testing_transformer",
+        "vocab_size": 10000,
+        "context_length": 32,
+        "num_layers": 6,
+        "d_model": 400,
+        "num_heads": 6,
+        "d_ff": 1600,
+        "attn_pdrop": 0.1,
+        "residual_pdrop": 0.1,
+        "weights": torch.load("fixtures/transformer_lm_weights.pt"),
+        "save_path": "transformer_saved/transformer_lm_weights.pt"
+    }
+
+    #########################
+
     tokenizer = Tokenizer.from_files(vocab_filepath='tokenizer_saved/ts_vocab.txt',
                                      merges_filepath='tokenizer_saved/ts_merges.txt', 
                                      special_tokens=["|endoftext|"])
@@ -64,9 +80,20 @@ def main():
     dataset = TextDataset(file_path, tokenizer)
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 
+    #########################
+
     #print("dataset examples:" + str(dataset.examples))
 
-    model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
+    #model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
+    model =  Transformer_LM(vocab_size = model_config["vocab_size"],
+                            context_length = model_config["context_length"],
+                            d_model = model_config["d_model"],
+                            num_layers = model_config["num_layers"],
+                            num_heads = model_config["num_heads"],
+                            d_ff = model_config["d_ff"],
+                            attn_pdrop = model_config["attn_pdrop"],
+                            residual_pdrop = model_config["residual_pdrop"],
+                            weights = model_config["weights"],)
     #optimizer = AdamW(model.parameters(), lr=5e-5)
     optimizer = AdamW(model.parameters(), lr=5e-5)
     train(model, torch.device("cuda"), data_loader, optimizer)
