@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import GPT2Tokenizer, GPT2LMHeadModel #, AdamW
 import wandb
 from tqdm import tqdm
+import os
 
 from tests.tokenizer import Tokenizer
 from tests.Transformer import Transformer_LM
@@ -139,8 +140,8 @@ def main():
     
     ##################################################
     
-    if not os.path.exists(f"data/{dataset}"):
-        os.makedirs(f"data/{dataset}")
+    if not os.path.exists(model_config["save_path"]):
+        os.makedirs(model_config["save_path"])
     
     ##################################################
     
