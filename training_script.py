@@ -58,7 +58,7 @@ def main():
 
     model_config = {
         "name:": "testing_transformer",
-        "vocab_size": 50257,
+        "vocab_size": 10000,
         "context_length": 64, #1024
         "num_layers": 36,
         "d_model": 1280,
