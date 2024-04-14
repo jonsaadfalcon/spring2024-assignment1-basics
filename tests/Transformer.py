@@ -237,7 +237,7 @@ def softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
 
 import torch.nn as nn
 
-class positionwise_feedforward_params(nn.Parameter):
+class positionwise_feedforward_params(nn.Module):
     
     def __init__(
         self,
@@ -267,7 +267,7 @@ class positionwise_feedforward_params(nn.Parameter):
     
 ########################################################
 
-class multihead_self_attention_params(nn.Parameter):
+class multihead_self_attention_params(nn.Module):
     
     def __init__(
         self,
@@ -325,7 +325,7 @@ class multihead_self_attention_params(nn.Parameter):
     
 ########################################################
 
-class rmsnorm_params(nn.Parameter):
+class rmsnorm_params(nn.Module):
     
     def __init__(
         self,
