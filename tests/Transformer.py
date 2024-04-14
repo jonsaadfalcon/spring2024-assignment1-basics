@@ -252,8 +252,12 @@ class positionwise_feedforward_params(nn.Module):
         
         self.d_model = d_model
         self.dff = d_ff
-        self.w1_weights = weights[weight_1]
-        self.w2_weights = weights[weight_2]
+        if weights is not None:
+            self.w1_weights = weights[weight_1]
+            self.w2_weights = weights[weight_2]
+        else:
+            self.w1_weights = Parameter(torch.randn(self.d_ff, self.d_model))
+            self.w2_weights = Parameter(torch.randn(self.d_model, self.d_ff))
 
     ########################################################
 
@@ -274,8 +278,8 @@ class multihead_self_attention_params(nn.Module):
         d_model: int,
         num_heads: int,
         attn_pdrop: float,
-        weights: dict[str, torch.FloatTensor],
-        weight_keys: dict[str, str] = None,
+        weights: dict[str, torch.FloatTensor] | None,
+        weight_keys: dict[str, str] | None,
     ) -> torch.FloatTensor:
         
         super(multihead_self_attention_params, self).__init__()
@@ -286,11 +290,16 @@ class multihead_self_attention_params(nn.Module):
         self.weights = weights
         self.weight_keys = weight_keys
 
-        self.Q_weights = weights[weight_keys["q_proj"]]
-        self.K_weights = weights[weight_keys["k_proj"]] 
-        self.V_weights = weights[weight_keys["v_proj"]]
-
-        self.output_proj = weights[weight_keys["output_proj"]]
+        if weight_keys is not None:
+            self.Q_weights = weights[weight_keys["q_proj"]]
+            self.K_weights = weights[weight_keys["k_proj"]] 
+            self.V_weights = weights[weight_keys["v_proj"]]
+            self.output_proj = weights[weight_keys["output_proj"]]
+        else:
+            self.Q_weights = Parameter(torch.randn(self.d_model, self.d_model))
+            self.K_weights = Parameter(torch.randn(self.d_model, self.d_model))
+            self.V_weights = Parameter(torch.randn(self.d_model, self.d_model))
+            self.output_proj = Parameter(torch.randn(self.d_model, self.d_model))
 
     ########################################
 
@@ -331,7 +340,7 @@ class rmsnorm_params(nn.Module):
         self,
         d_model: int,
         eps: float,
-        weights: dict[str, torch.FloatTensor],
+        weights: dict[str, torch.FloatTensor] | None,
         weight_key="weight"
     ) -> torch.FloatTensor:
         
@@ -340,7 +349,11 @@ class rmsnorm_params(nn.Module):
         self.eps = eps
         self.weights = weights
         self.d_model = d_model
-        self.rmsnorm = Parameter(weights[weight_key])
+
+        if self.weights is not None:
+            self.rmsnorm = Parameter(weights[weight_key])
+        else:
+            self.rmsnorm = Parameter(torch.randn(self.d_model))
 
     def perform_rmsnorm(self, in_features: torch.FloatTensor):
     
@@ -429,8 +442,12 @@ class Transformer_LM(nn.Module):
         #self.in_indices = in_indices
         #self.weights_keys = weight_keys
 
-        self.token_embeddings = Parameter(self.weights['token_embeddings.weight'])
-        self.position_embeddings = Parameter(self.weights['position_embeddings.weight'])
+        if self.weights is not None:
+            self.token_embeddings = Parameter(self.weights['token_embeddings.weight'])
+            self.position_embeddings = Parameter(self.weights['position_embeddings.weight'])
+        else:
+            self.token_embeddings = Parameter(torch.randn(self.vocab_size, self.d_model))
+            self.position_embeddings = Parameter(torch.randn(self.context_length, self.d_model))
 
         self.transformer_blocks = []
         for layer_number in range(self.num_layers):
@@ -448,8 +465,12 @@ class Transformer_LM(nn.Module):
                                                                     residual_pdrop=self.residual_pdrop, weights=self.weights, weight_keys=weight_keys, eps=self.eps))
 
         self.final_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key="ln_final.weight")
-        self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False)
-        self.linear_transformation.weight = Parameter(self.weights['lm_head.weight'])
+        
+        if self.weights is not None:
+            self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False)
+            self.linear_transformation.weight = Parameter(self.weights['lm_head.weight'])
+        else:
+            self.linear_transformation = Linear(self.d_model, self.vocab_size, bias=False)
 
 
     ################################################
@@ -459,9 +480,9 @@ class Transformer_LM(nn.Module):
         
         ########################################################
         
-        token_embeddings = self.token_embeddings[in_indices]
+        token_embeddings = self.token_embeddings(in_indices)
         position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
-        position_embeddings = self.position_embeddings[position_ids]
+        position_embeddings = self.position_embeddings(position_ids)
         input_embeddings = token_embeddings + position_embeddings
         input_embeddings = F.dropout(input_embeddings, p=self.residual_pdrop, inplace=False)
 
