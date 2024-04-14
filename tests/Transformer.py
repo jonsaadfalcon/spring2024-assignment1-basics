@@ -9,7 +9,7 @@ import numpy as np
 
 import torch
 import torch.nn.functional as F
-from torch.nn import Linear, Parameter
+from torch.nn import Linear, Parameter, Embedding
 
 from numpy import random, zeros, int32
 from torch import tensor, long
@@ -442,16 +442,20 @@ class Transformer_LM(nn.Module):
         #self.in_indices = in_indices
         #self.weights_keys = weight_keys
 
+        ########################
+
         if self.weights is not None:
-            self.token_embeddings = Linear(self.vocab_size, self.d_model, bias=False)
-            self.token_embeddings.weight = Parameter(self.weights['token_embeddings.weight'])
-            self.position_embeddings = Linear(self.context_length, self.d_model, bias=False)
-            self.position_embeddings.weight = Parameter(self.weights['position_embeddings.weight'])
+            self.token_embeddings = Embedding(self.vocab_size, self.d_model)
+            self.token_embeddings.weights = weights['token_embeddings.weight']
+            self.position_embeddings = Embedding(self.context_length, self.d_model)
+            self.position_embeddings.weights = weights['token_embeddings.weight']
         else:
-            self.token_embeddings = Linear(self.vocab_size, self.d_model, bias=False)
+            self.token_embeddings = Embedding(self.vocab_size, self.d_model)
             self.token_embeddings.weights = Parameter(torch.randn(self.vocab_size, self.d_model))
-            self.position_embeddings = Linear(self.context_length, self.d_model, bias=False)
+            self.position_embeddings = Embedding(self.context_length, self.d_model)
             self.position_embeddings.weights = Parameter(torch.randn(self.context_length, self.d_model))
+
+        ########################
 
         self.transformer_blocks = []
         for layer_number in range(self.num_layers):
@@ -467,6 +471,8 @@ class Transformer_LM(nn.Module):
             }
             self.transformer_blocks.append(transformer_block_params(d_model=self.d_model, num_heads=self.num_heads, d_ff=self.d_ff, attn_pdrop=self.attn_pdrop, 
                                                                     residual_pdrop=self.residual_pdrop, weights=self.weights, weight_keys=weight_keys, eps=self.eps))
+
+        ########################
 
         self.final_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key="ln_final.weight")
         
