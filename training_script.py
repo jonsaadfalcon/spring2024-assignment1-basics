@@ -80,7 +80,7 @@ def train(model, device, loader, optimizer, learning_scheduler_config, model_con
                 Transformer_LM.save_checkpoint(model=model,
                                                optimizer=optimizer,
                                                iteration=overall_training_count,
-                                               out=model_config["save_path"].replace(".pt", f"_{overall_training_count}.pt)"))
+                                               out=model_config["save_path"] + f"checkpoint_{overall_training_count}.pt")
 
     return overall_training_count
 
@@ -162,7 +162,7 @@ def main():
     Transformer_LM.save_checkpoint(model=model,
                                    optimizer=optimizer,
                                    iteration=final_iteration,
-                                   out=model_config["save_path"].replace(".pt", f"_{final_iteration}.pt)"))
+                                   out=model_config["save_path"] + f"checkpoint_{final_iteration}.pt")
     print("Saved model to: ", model_config["save_path"])
 
     wandb.finish()
