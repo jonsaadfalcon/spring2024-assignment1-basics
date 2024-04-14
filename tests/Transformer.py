@@ -267,9 +267,9 @@ class positionwise_feedforward_params(nn.Module):
 
     def perform_positionwise_feedforward(self, in_features: torch.FloatTensor):
 
-        first_linear_transformation_output = self.w1_weights(in_features)
+        first_linear_transformation_output = in_features @ self.w1_weights.t()
         first_linear_transformation_output = gelu(first_linear_transformation_output)
-        output = self.w2_weights(first_linear_transformation_output)
+        output = first_linear_transformation_output @ self.w2_weights.t()
         
         return output
     
