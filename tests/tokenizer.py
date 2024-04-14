@@ -303,5 +303,5 @@ class Tokenizer():
         for token_id in tokens:
             token_text = self.vocabulary[token_id]
             decoded_text.append(token_text)
-        decoded_text = (" ").join(decoded_text)
+        decoded_text = ("").join(decoded_text)
         return decoded_text
