@@ -256,8 +256,8 @@ class positionwise_feedforward_params(nn.Module):
             self.w1_weights = weights[weight_1]
             self.w2_weights = weights[weight_2]
         else:
-            self.w1_weights = Parameter(torch.randn(self.d_ff, self.d_model))
-            self.w2_weights = Parameter(torch.randn(self.d_model, self.d_ff))
+            self.w1_weights = Parameter(torch.randn(d_ff, d_model))
+            self.w2_weights = Parameter(torch.randn(d_model, d_ff))
 
     ########################################################
 
