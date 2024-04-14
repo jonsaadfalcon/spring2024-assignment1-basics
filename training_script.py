@@ -43,7 +43,7 @@ class TextDataset(Dataset):
     def __getitem__(self, i):
         return self.examples[i]
 
-def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3, logging_interval=10):
+def train(model, device, loader, optimizer, learning_scheduler_config, model_config, saving_interval=1000, epochs=3, logging_interval=10):
     model.train()
     overall_training_count = 0
     for epoch in range(epochs):  # run for more epochs depending on dataset size
@@ -75,6 +75,14 @@ def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3,
                 wandb.log({"loss": loss.item()})
                 print(f"Epoch: {epoch}, Idx: {idx}, Loss: {loss.item()}, LR: {optimizer.defaults['lr']}")
 
+            if overall_training_count % saving_interval == 0:
+                Transformer_LM.save_checkpoint(model=model,
+                                               optimizer=optimizer,
+                                               iteration=overall_training_count,
+                                               out=model_config["save_path"].replace(".pt", f"_{overall_training_count}.pt)"))
+
+    return overall_training_count
+
 def main():
     wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
 
@@ -100,6 +108,7 @@ def main():
     }
 
     epochs = 3
+    saving_interval = 1000
     max_training_examples = 10
 
     ##################################################
@@ -138,11 +147,16 @@ def main():
                                                       warmup_iters=learning_scheduler_config['warmup_iters'],
                                                       cosine_cycle_iters=learning_scheduler_config['cosine_cycle_iters'])
 
-    train(model, device, data_loader, optimizer, 
-          learning_scheduler_config=learning_scheduler_config, epochs=epochs)
+    final_iteration = train(model, device, data_loader, optimizer, 
+                            learning_scheduler_config=learning_scheduler_config, 
+                            model_config=model_config, saving_interval=saving_interval,
+                            epochs=epochs)
     
     print("Saving model!")
-    model.save_checkpoint(model_config["save_path"])
+    Transformer_LM.save_checkpoint(model=model,
+                                   optimizer=optimizer,
+                                   iteration=final_iteration,
+                                   out=model_config["save_path"].replace(".pt", f"_{final_iteration}.pt)"))
     print("Saved model to: ", model_config["save_path"])
 
     wandb.finish()
