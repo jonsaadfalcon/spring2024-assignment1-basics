@@ -24,6 +24,8 @@ class TextDataset(Dataset):
                 line_decoded = line_in_bytes.decode('utf-8')
                 tokens = tokenizer.encode(line_decoded)
 
+                breakpoint()
+
                 for i in range(0, max(block_size, len(tokens) - block_size + 1), block_size):
                     self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
 
