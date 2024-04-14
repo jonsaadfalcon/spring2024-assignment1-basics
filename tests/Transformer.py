@@ -240,13 +240,16 @@ def load_batch(
     """
 
     #raise NotImplementedError
+
+    from numpy import random, zeros, int32
+    from torch import tensor, long
   
-    inputs = np.zeros((batch_size, context_length), dtype=np.int64)
-    target_labels = np.zeros((batch_size, context_length), dtype=np.int64)
+    inputs = zeros((batch_size, context_length)) #, dtype=int32
+    target_labels = zeros((batch_size, context_length)) #, dtype=int32
 
     ################################################
     
-    starting_index = np.random.randint(0, len(dataset) - context_length, batch_size)
+    starting_index = random.randint(0, len(dataset) - context_length, batch_size)
     for row, start_index in enumerate(starting_index):
         
         inputs[row] = dataset[start_index : start_index + context_length]
@@ -254,4 +257,4 @@ def load_batch(
 
     ################################################
     
-    return torch.tensor(inputs, dtype=torch.long, device=device), torch.tensor(target_labels, dtype=torch.long, device=device)
+    return tensor(inputs, dtype=long, device=device), tensor(target_labels, dtype=long, device=device)
