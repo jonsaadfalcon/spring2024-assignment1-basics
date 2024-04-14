@@ -85,7 +85,7 @@ def get_lr_cosine_schedule(
 
     if warmup_iters > it:
         
-        return it / (max_learning_rate * warmup_iters)
+        return max_learning_rate * (it / warmup_iters)
     
     ######################
     

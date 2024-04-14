@@ -38,9 +38,9 @@ class TextDataset(Dataset):
     def __getitem__(self, i):
         return self.examples[i]
 
-def train(model, device, loader, optimizer):
+def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3):
     model.train()
-    for epoch in range(3):  # run for more epochs depending on dataset size
+    for epoch in range(epochs):  # run for more epochs depending on dataset size
         for idx, input_ids in enumerate(loader):
             
             input_ids = input_ids.to(device)
@@ -55,9 +55,11 @@ def train(model, device, loader, optimizer):
             optimizer.step()
             optimizer.zero_grad()
 
+            optimizer.defaults["lr"] = get_lr_cosine_schedule(it=idx, max_learning_rate=5e-5, total_steps=len(loader) * epochs)
+
             if idx % 10 == 0:  # log every 10 batches
                 wandb.log({"loss": loss.item()})
-                print(f"Epoch: {epoch}, Loss: {loss.item()}")
+                print(f"Epoch: {epoch}, Loss: {loss.item()}, LR: {optimizer.defaults['lr']}")
 
 def main():
     wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
@@ -74,6 +76,13 @@ def main():
         "residual_pdrop": 0.1,
         "weights": None, #torch.load("tests/fixtures/transformer_lm_weights.pt"),
         "save_path": "transformer_saved/transformer_lm_weights.pt"
+    }
+
+    learning_scheduler_config = {
+        "max_learning_rate": 5e-5,
+        "min_learning_rate": 1e-5,
+        "warmup_iters": 1000,
+        "cosine_cycle_iters": 10000
     }
 
     #########################
@@ -105,8 +114,11 @@ def main():
     model.to(device)
     #breakpoint()
     #optimizer = AdamW(model.parameters(), lr=5e-5)
-    optimizer = AdamW(model.parameters(), lr=5e-5)
-    train(model, device, data_loader, optimizer)
+    optimizer = AdamW(model.parameters(), lr=learning_scheduler_config["max_learning_rate"])
+
+    epochs = 3
+    train(model, device, data_loader, optimizer, 
+          learning_scheduler_config=learning_scheduler_config, epochs=epochs)
 
     wandb.finish()
 
