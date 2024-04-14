@@ -14,6 +14,8 @@ from torch.nn import Linear, Parameter, Embedding
 from numpy import random, zeros, int32
 from torch import tensor, long, mean
 
+from transformers.modeling_outputs import BaseModelOutput
+
 ########################################################
 
 def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
@@ -541,10 +543,13 @@ class Transformer_LM(nn.Module):
 
         if labels is not None:
             loss = cross_entropy(linear_output, labels)
-            return {
-                        "loss": loss,
-                        "logits": linear_output
-            }
+            return BaseModelOutput(
+                loss=loss,
+                last_hidden_state=linear_output,
+                past_key_values=None,
+                hidden_states=None,
+                attentions=None
+            )
         else:
             return linear_output
     
