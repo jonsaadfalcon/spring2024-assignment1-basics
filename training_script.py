@@ -97,7 +97,7 @@ def main():
                             residual_pdrop = model_config["residual_pdrop"],
                             weights = model_config["weights"],)
     model.to(device)
-    breakpoint()
+    #breakpoint()
     #optimizer = AdamW(model.parameters(), lr=5e-5)
     optimizer = AdamW(model.parameters(), lr=5e-5)
     train(model, device, data_loader, optimizer)
