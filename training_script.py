@@ -16,7 +16,7 @@ class TextDataset(Dataset):
         text = self.texts[idx]
         inputs = self.tokenizer(text, max_length=self.max_len, padding='max_length', truncation=True, return_tensors="pt")
         return {
-            'input_ids': inputs['input_ids'].squeeze(0),  # Remove batch dimension
+            'input_ids': inputs['input_ids'].squeeze(0),
             'attention_mask': inputs['attention_mask'].squeeze(0)
         }
 
@@ -25,8 +25,7 @@ def train(model, device, train_loader, optimizer, epoch):
     for batch_idx, batch in enumerate(train_loader):
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
-        breakpoint()
-        outputs = model(input_ids, attention_mask=attention_mask, labels=input_ids)  # Assuming MLM task
+        outputs = model(input_ids, attention_mask=attention_mask, labels=input_ids)  # Labels are same as input_ids for MLM
         loss = outputs.loss
         loss.backward()
         optimizer.step()
