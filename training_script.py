@@ -1,11 +1,12 @@
 import torch
 from torch.utils.data import DataLoader, Dataset
-from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW
+from transformers import GPT2Tokenizer, GPT2LMHeadModel #, AdamW
 import wandb
+from tqdm import tqdm
 
 from tests.tokenizer import Tokenizer
 from tests.Transformer import Transformer_LM
-from tqdm import tqdm
+from tests.optimizer import AdamW
 
 ##########################################################
 
@@ -63,9 +64,10 @@ def main():
     dataset = TextDataset(file_path, tokenizer)
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 
-    print("dataset examples:" + str(dataset.examples))
+    #print("dataset examples:" + str(dataset.examples))
 
     model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
+    #optimizer = AdamW(model.parameters(), lr=5e-5)
     optimizer = AdamW(model.parameters(), lr=5e-5)
     train(model, torch.device("cuda"), data_loader, optimizer)
 

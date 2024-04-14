@@ -18,7 +18,7 @@ class AdamW(torch.optim.Optimizer):
         self.betas = betas
         self.eps = eps
         self.lamda = weight_decay
-        self.params=params
+        self.params = params
         
         super().__init__(params, {"lr": lr})
 
