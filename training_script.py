@@ -9,12 +9,12 @@ class TextDataset(Dataset):
         #with open(file_path, 'r', encoding='utf-8') as f:
         #    lines = f.readlines()
 
-        breakpoint()
+        #breakpoint()
         self.examples = []
         lines = ["Hello, world!", "Transformers are models.", "This is a sample dataset."]
         for line in lines:
             tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(line))
-            for i in range(0, len(tokens) - block_size + 1, block_size):  # Overlap is possible
+            for i in range(0, max(block_size, len(tokens) - block_size + 1), block_size):  # Overlap is possible
                 self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
 
     def __len__(self):
