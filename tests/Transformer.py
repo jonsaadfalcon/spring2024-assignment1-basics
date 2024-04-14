@@ -370,7 +370,7 @@ class transformer_block_params(nn.Module):
         self.weights_keys = weight_keys
         self.eps = eps
 
-        breakpoint()
+        #breakpoint()
 
         self.first_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=weight_keys["rms_norm_1"])
         self.multihead_self_attention = multihead_self_attention_params(d_model=self.d_model, num_heads=self.num_heads, attn_pdrop=self.attn_pdrop, weights=self.weights, weight_keys=weight_keys)
