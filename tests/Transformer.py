@@ -606,4 +606,19 @@ class Transformer_LM(nn.Module):
         return tensor(inputs, dtype=long, device=device), tensor(target_labels, dtype=long, device=device)
 
     ########################################################
+
+    def decode_text_from_logits(logits, tokenizer, end_of_text_token_id, max_length=50):
+       
+        generated_tokens_for_decoding = []
+
+        for i in range(logits.shape[0]):
+            
+            token_probabilities = torch.softmax(logits[i], dim=0)
+            next_token_id = torch.multinomial(token_probabilities, 1).item()
+            generated_tokens_for_decoding.append(next_token_id)
+
+            if len(generated_tokens_for_decoding) >= max_length or next_token_id == end_of_text_token_id:
+                break
+
+        return tokenizer.decode(generated_tokens_for_decoding)
         

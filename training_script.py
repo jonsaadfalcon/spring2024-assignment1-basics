@@ -108,9 +108,9 @@ def main():
         "cosine_cycle_iters": 10000
     }
 
-    epochs = 3
+    epochs = 1
     saving_interval = 1000
-    max_training_examples = 10
+    max_training_examples = 1
 
     ##################################################
 
@@ -164,6 +164,14 @@ def main():
                                    iteration=final_iteration,
                                    out=model_config["save_path"] + f"checkpoint_{final_iteration}.pt")
     print("Saved model to: ", model_config["save_path"])
+
+    breakpoint()
+
+    logits_for_prediction = model(model.examples[0].unsqueeze(0).to(device))
+    model.decode_text_from_logits(logits=logits_for_prediction,
+                                  tokenizer=tokenizer,
+                                  max_length=100,
+                                  end_of_text_token_id=tokenizer.token_to_id("|endoftext|"))
 
     wandb.finish()
 
