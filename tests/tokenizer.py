@@ -114,7 +114,10 @@ class Tokenizer():
         #    loaded_encoded_tuples = json.load(f)
         #decoded_tuples = [(base64.b64decode(item[0]), base64.b64decode(item[1])) for item in loaded_encoded_tuples]
         
-        self.vocabulary = vocabulary.copy()
+        self.vocabulary = {}
+        for k, v in vocabulary.items():
+            self.vocabulary[int(k)] = v
+
         #with open(vocab_file, 'rb') as file:
         #    file_content = file.read()
         #bytes_list = file_content.strip().split(b'\n')
