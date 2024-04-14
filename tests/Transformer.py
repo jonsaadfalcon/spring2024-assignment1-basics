@@ -344,6 +344,7 @@ class Transformer_LM(nn.Module):
 
     def forward(self,
                 in_indices: torch.LongTensor,):
+        
         token_embeddings = self.weights['token_embeddings.weight'][in_indices]
         position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
         position_embeddings = self.weights['position_embeddings.weight'][position_ids]
