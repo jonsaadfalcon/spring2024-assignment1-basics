@@ -9,6 +9,7 @@ class TextDataset(Dataset):
         #with open(file_path, 'r', encoding='utf-8') as f:
         #    lines = f.readlines()
 
+        breakpoint()
         self.examples = []
         lines = ["Hello, world!", "Transformers are models.", "This is a sample dataset."]
         for line in lines:
@@ -46,7 +47,7 @@ def main():
 
     dataset = TextDataset("path_to_your_dataset.txt", tokenizer)
     #print("dataset: ", str(dataset))
-    breakpoint()
+    #breakpoint()
     data_loader = DataLoader(dataset, batch_size=2, shuffle=True)
 
     train(model, torch.device("cuda"), data_loader, optimizer)
