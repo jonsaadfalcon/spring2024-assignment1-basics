@@ -12,165 +12,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-
-def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
-
-    from torch import mean
-    
-    stable_logits = inputs - torch.max(inputs, dim=1, keepdim=True)[0]
-    sum_logits = torch.sum(torch.exp(stable_logits), dim=1)
-    sum_of_log_exp = torch.log(sum_logits)
-
-    logits_of_true_class = stable_logits.gather(dim=1, index=targets.unsqueeze(1))
-    logits_of_true_class = logits_of_true_class.squeeze()
-    
-    loss_per_example = sum_of_log_exp - logits_of_true_class
-    cross_entropy_mean = mean(loss_per_example)
-    
-    return cross_entropy_mean
-
-
-def rmsnorm(
-    d_model: int,
-    eps: float,
-    weights: dict[str, torch.FloatTensor],
-    in_features: torch.FloatTensor,
-    weight_key="weight"
-) -> torch.FloatTensor:
-    from torch.nn import Parameter
-    
-    rms_norm = torch.sqrt(eps + torch.mean(in_features ** 2, dim=-1, keepdim=True))
-
-    features_normalized = in_features / rms_norm
-    final_output = Parameter(weights[weight_key]) * features_normalized
-    
-    return final_output
-
-
-
-def positionwise_feedforward(
-    d_model: int,
-    d_ff: int,
-    weights: dict[str, torch.FloatTensor],
-    in_features: torch.FloatTensor,
-    weight_1="w1.weight",
-    weight_2="w2.weight",
-) -> torch.FloatTensor:
-    
-    import numpy as np
-
-    w1_weights = weights[weight_1]
-    w2_weights = weights[weight_2]
-
-    #breakpoint()
-
-    first_linear_transformation_output = in_features@w1_weights.t()
-    first_linear_transformation_output = run_gelu(first_linear_transformation_output)
-    output = first_linear_transformation_output@w2_weights.t()
-    
-    return output
-
-
-def transformer_block(
-    d_model: int,
-    num_heads: int,
-    d_ff: int,
-    attn_pdrop: float,
-    residual_pdrop: float,
-    weights: dict[str, torch.FloatTensor],
-    in_features: torch.FloatTensor,
-    weight_keys: dict[str, str],
-) -> torch.FloatTensor:
-    
-    if weight_keys is None:
-        breakpoint()
-        weight_keys = {
-            "rms_norm_1": "ln1.weight",
-            "rms_norm_2": "ln2.weight",
-            "positionwise_feedforward_1": "ffn.w1.weight",
-            "positionwise_feedforward_2": "ffn.w2.weight",
-        }
-
-    eps = 1e-5
-
-    rms_norm_output = rmsnorm(d_model=d_model, eps=eps, in_features=in_features, weights=weights, weight_key=weight_keys["rms_norm_1"])
-    attention_output = multihead_self_attention(d_model, num_heads, attn_pdrop, weights, rms_norm_output, weight_keys=weight_keys)
-    causal_attention_output = F.dropout(attention_output, p=residual_pdrop, inplace=False)
-    attention_output = in_features + causal_attention_output
-
-    rms_norm_output = rmsnorm(d_model=d_model, eps=eps, in_features=attention_output, weights=weights, weight_key=weight_keys["rms_norm_2"])
-    position_feedforward_output = positionwise_feedforward(d_model, d_ff, weights=weights, in_features=rms_norm_output,
-                                                           weight_1=weight_keys["positionwise_feedforward_1"], 
-                                                           weight_2=weight_keys["positionwise_feedforward_2"])
-    position_feedforward_output = F.dropout(position_feedforward_output, p=residual_pdrop, inplace=False)
-    final_output = attention_output + position_feedforward_output
-
-    return final_output
-
-
-
-
-
-def multihead_self_attention(
-    d_model: int,
-    num_heads: int,
-    attn_pdrop: float,
-    weights: dict[str, torch.FloatTensor],
-    in_features: torch.FloatTensor,
-    weight_keys: dict[str, str] = None,
-) -> torch.FloatTensor:
-    
-    
-    import torch.nn.functional as F
-
-    #breakpoint()
-
-    d_key =  d_model // num_heads
-    batch_size, seq_length, _ = in_features.size()
-
-    try:
-        Q_weights = torch.cat([weights[f"q_heads.{row}.weight"] for row in range(num_heads)], dim=0)
-        K_weights = torch.cat([weights[f"k_heads.{row}.weight"] for row in range(num_heads)], dim=0)
-        V_weights = torch.cat([weights[f"v_heads.{row}.weight"] for row in range(num_heads)], dim=0)
-    except:
-        try:
-            Q_weights = weights[f"attn.q_proj.weight"]
-            K_weights = weights[f"attn.k_proj.weight"] 
-            V_weights = weights[f"attn.v_proj.weight"]
-        except:
-            Q_weights = weights[weight_keys["q_proj"]]
-            K_weights = weights[weight_keys["k_proj"]] 
-            V_weights = weights[weight_keys["v_proj"]]
-
-    query_output = torch.matmul(in_features, Q_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-    key_output = torch.matmul(in_features, K_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-    value_output = torch.matmul(in_features, V_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-
-    mask = torch.triu(torch.ones(seq_length, seq_length), diagonal=1) > 0
-    attention_output = SDPA(query_output, key_output, value_output, 
-                            mask, pdrop=attn_pdrop)
-    attention_output = attention_output.transpose(1, 2).contiguous().view(batch_size, -1, d_model)
-    try:
-        final_attention_output = torch.matmul(attention_output, weights["output_proj.weight"].transpose(0, 1))
-    except:
-        try:
-            final_attention_output = torch.matmul(attention_output, weights["attn.output_proj.weight"].transpose(0, 1))
-        except:
-            final_attention_output = torch.matmul(attention_output, weights[weight_keys["output_proj"]].transpose(0, 1))
-
-    return final_attention_output
+from tests.Transformer import transformer_block, cross_entropy, rmsnorm, positionwise_feedforward
+from tests.Transformer import multihead_self_attention, SDPA, multihead_self_attention, gelu
 
 
 ########################################################################
-
-def SDPA(Q, K, V, mask, pdrop):
-    import torch.nn.functional as F
-    query_scores = torch.matmul(Q, K.transpose(-2, -1)) / np.sqrt(Q.size(-1))
-    query_scores.masked_fill_(mask, -1e9) if mask is not None else query_scores
-    softmax_scores = run_softmax(query_scores, dim=-1)
-    dropout_scores = F.dropout(input=softmax_scores, p=pdrop) if pdrop is not None else softmax_scores
-    final_attention_output = torch.matmul(dropout_scores, V)
-    return final_attention_output
 
 
 def run_positionwise_feedforward(
@@ -619,7 +465,27 @@ def run_get_batch(
         is the sampled input sequences, and the second tuple item is the corresponding
         language modeling labels.
     """
-    raise NotImplementedError
+
+    #raise NotImplementedError
+
+    # Sample random starting indices for each batch
+    start_indices = np.random.randint(0, len(dataset) - context_length, batch_size)
+    
+    # Initialize empty arrays for input sequences and targets
+    input_sequences = np.zeros((batch_size, context_length), dtype=np.int64)
+    targets = np.zeros((batch_size, context_length), dtype=np.int64)
+    
+    # Populate input sequences and targets
+    for i, start_index in enumerate(start_indices):
+        end_index = start_index + context_length
+        input_sequences[i] = dataset[start_index:end_index]
+        targets[i] = dataset[start_index+1:end_index+1]
+    
+    # Convert numpy arrays to torch tensors
+    input_sequences = torch.tensor(input_sequences, dtype=torch.long, device=device)
+    targets = torch.tensor(targets, dtype=torch.long, device=device)
+    
+    return input_sequences, targets
 
 
 def run_softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
@@ -685,6 +551,8 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
     Returns:
         None
     """
+    from tests.optimizer import gradient_clipping
+    return gradient_clipping(parameters, max_l2_norm)
     raise NotImplementedError
 
 
@@ -727,6 +595,10 @@ def run_get_lr_cosine_schedule(
     Returns:
         Learning rate at the given iteration under the specified schedule.
     """
+    from tests.optimizer import get_lr_cosine_schedule
+    return get_lr_cosine_schedule(it, 
+                                  max_learning_rate, min_learning_rate, 
+                                  warmup_iters, cosine_cycle_iters)
     raise NotImplementedError
 
 
