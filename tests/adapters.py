@@ -341,7 +341,7 @@ def run_transformer_lm(
 
     import torch.nn.functional as F
 
-    #breakpoint()
+    breakpoint()
     token_embeddings = weights['token_embeddings.weight'][in_indices]
     position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
     position_embeddings = weights['position_embeddings.weight'][position_ids]

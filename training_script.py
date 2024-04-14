@@ -60,7 +60,7 @@ def main():
         "name:": "testing_transformer",
         "vocab_size": 10000,
         "context_length": 32,
-        "num_layers": 6,
+        "num_layers": 2,
         "d_model": 400,
         "num_heads": 6,
         "d_ff": 1600,
