@@ -66,7 +66,7 @@ def main():
         "d_ff": 1600,
         "attn_pdrop": 0.1,
         "residual_pdrop": 0.1,
-        "weights": torch.load("fixtures/transformer_lm_weights.pt"),
+        "weights": torch.load("tests/fixtures/transformer_lm_weights.pt"),
         "save_path": "transformer_saved/transformer_lm_weights.pt"
     }
 
