@@ -20,19 +20,19 @@ from transformers.modeling_outputs import CausalLMOutput
 
 def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
 
-    breakpoint()
+    #breakpoint()
 
     if len(inputs.shape) == 3:
         inputs = inputs.view(-1, inputs.size(-1))
         targets = targets.view(-1)
 
-    assert inputs.size(0) == targets.size(1)
+    assert inputs.size(0) == targets.size(0)
     
     stable_logits = inputs - torch.max(inputs, dim=1, keepdim=True)[0]
     sum_logits = torch.sum(torch.exp(stable_logits), dim=1)
     sum_of_log_exp = torch.log(sum_logits)
 
-    logits_of_true_class = stable_logits.gather(dim=1, index=targets) #.unsqueeze(1)
+    logits_of_true_class = torch.gather(stable_logits, dim=1, index=targets.unsqueeze(1)).squeeze(1)
     logits_of_true_class = logits_of_true_class.squeeze()
     
     loss_per_example = sum_of_log_exp - logits_of_true_class
