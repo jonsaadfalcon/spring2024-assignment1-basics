@@ -37,7 +37,7 @@ def train(model, device, train_loader, optimizer, epoch):
 
 def main():
     # Initialize Weights & Biases
-    wandb.init(project='transformer_pretraining', entity='your_username')
+    wandb.init(project='LLM_from_Scratch', entity='jonsaadfalcon')
 
     # Set up device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
