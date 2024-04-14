@@ -95,7 +95,7 @@ def main():
     }
 
     epochs = 3
-    max_training_examples = 1000
+    max_training_examples = 10
 
     ##################################################
 
