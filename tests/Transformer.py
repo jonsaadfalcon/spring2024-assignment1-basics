@@ -614,10 +614,8 @@ class Transformer_LM(nn.Module):
         batch_size, seq_length, vocab_size = logits.size()
         assert batch_size == 1, "Batch size should be 1 for this decoding function."
 
-        # Reshape logits to [seq_length, vocab_size] for easier processing
         logits = logits.view(seq_length, vocab_size)
 
-        # Decode each position in the sequence
         decoded_tokens = []
         for i in range(seq_length):
             token_probabilities = torch.softmax(logits[i], dim=0)
@@ -627,8 +625,6 @@ class Transformer_LM(nn.Module):
             if next_token_id == end_of_text_token_id:
                 break
 
-        # Convert token ids to text
-        breakpoint()
         decoded_text = []
         for token_id in decoded_tokens:
             token_text = tokenizer.vocabulary[token_id]

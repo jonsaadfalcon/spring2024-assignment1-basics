@@ -167,11 +167,11 @@ def main():
 
     #breakpoint()
 
-    prompt_example = dataset.examples[0]
+    prompt_example = torch.tensor(tokenizer.encode("Once upon a time, there was a king who ruled over a kingdom. The king was very "))
     logits_for_prediction = model(prompt_example.unsqueeze(0).to(device))
     decoded_text = model.decode_from_logits(logits=logits_for_prediction, tokenizer=tokenizer, end_of_text_token_id=tokenizer.encode("|endoftext|")[0])
 
-    print("Prompt Text:", tokenizer.decode(prompt_example))
+    print("Prompt Text:", prompt_example)
     print("Decoded Text:", decoded_text)
 
     wandb.finish()
