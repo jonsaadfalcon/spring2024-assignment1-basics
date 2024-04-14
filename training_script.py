@@ -11,14 +11,14 @@ from tests.optimizer import AdamW, gradient_clipping, get_lr_cosine_schedule
 ##########################################################
 
 class TextDataset(Dataset):
-    def __init__(self, file_path, tokenizer, block_size=128):
+    def __init__(self, file_path, tokenizer, block_size=128, max_training_examples=10):
         
         self.examples = []
 
         print("Loading training text!")
         with open(file_path, 'rb') as f:
     
-            for line in tqdm(f.readlines()[1000:1003]):
+            for line in tqdm(f.readlines()[:max_training_examples]):
                 
                 #print("Line:", line.decode('utf-8'))
                 line_in_bytes = line
@@ -40,8 +40,11 @@ class TextDataset(Dataset):
 
 def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3, logging_interval=10):
     model.train()
+    overall_training_count = 0
     for epoch in range(epochs):  # run for more epochs depending on dataset size
         for idx, input_ids in enumerate(loader):
+
+            overall_training_count += 1
             
             input_ids = input_ids.to(device)
             outputs = model(input_ids, labels=input_ids)
@@ -55,7 +58,7 @@ def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3,
             optimizer.step()
             optimizer.zero_grad()
 
-            optimizer.defaults["lr"] = get_lr_cosine_schedule(it=idx, 
+            optimizer.defaults["lr"] = get_lr_cosine_schedule(it=overall_training_count, 
                                                               max_learning_rate=learning_scheduler_config['max_learning_rate'],
                                                               min_learning_rate=learning_scheduler_config['min_learning_rate'],
                                                               warmup_iters=learning_scheduler_config['warmup_iters'],
@@ -91,6 +94,9 @@ def main():
         "cosine_cycle_iters": 10000
     }
 
+    epochs = 3
+    max_training_examples = 1000
+
     ##################################################
 
     tokenizer = Tokenizer.from_files(vocab_filepath='tokenizer_saved/ts_vocab.txt',
@@ -98,12 +104,10 @@ def main():
                                      special_tokens=["|endoftext|"])
 
     file_path = "data/TinyStoriesV2-GPT4-train.txt"
-    dataset = TextDataset(file_path, tokenizer, block_size=model_config["context_length"])
+    dataset = TextDataset(file_path, tokenizer, block_size=model_config["context_length"], max_training_examples=max_training_examples)
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 
     ##################################################
-
-    #print("dataset examples:" + str(dataset.examples))
 
     device = torch.device("cuda:0")
 
@@ -129,7 +133,6 @@ def main():
                                                       warmup_iters=learning_scheduler_config['warmup_iters'],
                                                       cosine_cycle_iters=learning_scheduler_config['cosine_cycle_iters'])
 
-    epochs = 3
     train(model, device, data_loader, optimizer, 
           learning_scheduler_config=learning_scheduler_config, epochs=epochs)
 
