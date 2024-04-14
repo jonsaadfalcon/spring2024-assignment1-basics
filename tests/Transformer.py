@@ -360,6 +360,7 @@ class rmsnorm_params(nn.Module):
         current_state = torch.sqrt(self.eps + torch.mean(in_features ** 2, dim=-1, keepdim=True))
 
         features_normalized = in_features / current_state
+        breakpoint()
         final_output = self.rmsnorm * features_normalized
         
         return final_output
