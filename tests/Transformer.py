@@ -291,7 +291,7 @@ class Transformer_LM(nn.Module):
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         iteration: int,
-        out: str | os.PathLike | BinaryIO | IO[bytes],
+        out: str, # | os.PathLike | BinaryIO | IO[bytes],
     ):
         #raise NotImplementedError
         checkpoint = {
