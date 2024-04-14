@@ -304,7 +304,7 @@ class Transformer_LM(nn.Module):
     ################################################
     
     def load_checkpoint(
-        src: str | os.PathLike | BinaryIO | IO[bytes],
+        src: str, #| os.PathLike | BinaryIO | IO[bytes],
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
     ):
