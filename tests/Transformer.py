@@ -512,7 +512,7 @@ class Transformer_LM(nn.Module):
         
         ########################################################
 
-        print("in_indices: ", in_indices.shape)
+        #print("in_indices: ", in_indices.shape)
         in_indices = in_indices.to(self.token_embeddings.weight.device)
         token_embeddings = self.token_embeddings(in_indices)
             

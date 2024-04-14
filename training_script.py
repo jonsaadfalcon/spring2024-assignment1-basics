@@ -69,7 +69,7 @@ def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3,
                                                               warmup_iters=learning_scheduler_config['warmup_iters'],
                                                               cosine_cycle_iters=learning_scheduler_config['cosine_cycle_iters'])
             
-            print("optimizer.defaults['lr']: ", optimizer.defaults['lr'])
+            #print("optimizer.defaults['lr']: ", optimizer.defaults['lr'])
 
             if idx % logging_interval == 0:
                 wandb.log({"loss": loss.item()})
@@ -110,7 +110,7 @@ def main():
 
     file_path = "data/TinyStoriesV2-GPT4-train.txt"
     dataset = TextDataset(file_path, tokenizer, block_size=model_config["context_length"], max_training_examples=max_training_examples)
-    data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
+    data_loader = DataLoader(dataset, batch_size=8, shuffle=True)
 
     ##################################################
 
