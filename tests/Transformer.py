@@ -17,24 +17,27 @@ from torch import tensor, long, mean
 ########################################################
 
 def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
-
-    #breakpoint()
-
+    # Flatten inputs if it's 3D (batch_size, seq_len, num_classes)
     if len(inputs.shape) == 3:
-        inputs = inputs.view(-1, inputs.size(-1))
+        inputs = inputs.view(-1, inputs.size(-1))  # Reshape to (batch_size * seq_len, num_classes)
 
-    assert inputs.size(0) == targets.size(1)
-    
+    # Ensure that inputs and targets have compatible first dimensions
+    assert inputs.size(0) == targets.size(0), "The number of examples should match in inputs and targets"
+
+    # Compute stable logits to prevent numerical overflow
     stable_logits = inputs - torch.max(inputs, dim=1, keepdim=True)[0]
-    sum_logits = torch.sum(torch.exp(stable_logits), dim=1)
+    exp_logits = torch.exp(stable_logits)
+    sum_logits = torch.sum(exp_logits, dim=1, keepdim=True)
     sum_of_log_exp = torch.log(sum_logits)
 
-    logits_of_true_class = stable_logits.gather(dim=1, index=targets.unsqueeze(1))
-    logits_of_true_class = logits_of_true_class.squeeze()
-    
-    loss_per_example = sum_of_log_exp - logits_of_true_class
-    cross_entropy_mean = mean(loss_per_example)
-    
+    # Gather logits of the true class
+    # Ensure targets is (batch_size, 1) for gathering
+    logits_of_true_class = torch.gather(stable_logits, dim=1, index=targets.unsqueeze(1))
+
+    # Compute the cross-entropy loss
+    loss_per_example = sum_of_log_exp.squeeze() - logits_of_true_class.squeeze()
+    cross_entropy_mean = torch.mean(loss_per_example)
+
     return cross_entropy_mean
 
 ########################################################
