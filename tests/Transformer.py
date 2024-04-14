@@ -609,20 +609,27 @@ class Transformer_LM(nn.Module):
 
     ########################################################
 
-    def decode_text_from_logits(self, logits, tokenizer, end_of_text_token_id, max_length=50):
+    def decode_from_logits(self, logits, tokenizer, end_of_text_token_id):
 
         breakpoint()
-       
-        generated_tokens_for_decoding = []
+        
+        batch_size, seq_length, vocab_size = logits.size()
+        assert batch_size == 1, "Batch size should be 1 for this decoding function."
 
-        for i in range(logits.shape[0]):
-            
+        # Reshape logits to [seq_length, vocab_size] for easier processing
+        logits = logits.view(seq_length, vocab_size)
+
+        # Decode each position in the sequence
+        decoded_tokens = []
+        for i in range(seq_length):
             token_probabilities = torch.softmax(logits[i], dim=0)
-            next_token_id = torch.multinomial(token_probabilities, 1).item()
-            generated_tokens_for_decoding.append(next_token_id)
-
-            if len(generated_tokens_for_decoding) >= max_length or next_token_id == end_of_text_token_id:
+            next_token_id = torch.argmax(token_probabilities).item()  # Greedy decoding
+            decoded_tokens.append(next_token_id)
+            
+            if next_token_id == end_of_text_token_id:
                 break
 
-        return tokenizer.decode(generated_tokens_for_decoding)
+        # Convert token ids to text
+        decoded_text = tokenizer.decode(decoded_tokens)
+        return decoded_text
         
