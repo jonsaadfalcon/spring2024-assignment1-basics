@@ -322,12 +322,12 @@ class multihead_self_attention_params(nn.Module):
 
         ########################################
 
-        #query_output = torch.matmul(in_features, self.Q_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-        #key_output = torch.matmul(in_features, self.K_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-        #value_output = torch.matmul(in_features, self.V_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-        query_output = self.Q_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-        key_output = self.K_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
-        value_output = self.V_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        query_output = torch.matmul(in_features, self.Q_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        key_output = torch.matmul(in_features, self.K_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        value_output = torch.matmul(in_features, self.V_weights.transpose(0, 1)).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        #query_output = self.Q_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        #key_output = self.K_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
+        #value_output = self.V_weights(in_features).view(batch_size, seq_length, num_heads, d_key).transpose(1, 2)
 
         ########################################
 
@@ -335,8 +335,8 @@ class multihead_self_attention_params(nn.Module):
         attention_output = SDPA(query_output, key_output, value_output, 
                                 mask, pdrop=attn_pdrop)
         attention_output = attention_output.transpose(1, 2).contiguous().view(batch_size, -1, d_model)
-        #final_attention_output = torch.matmul(attention_output, self.output_proj.transpose(0, 1))
-        final_attention_output = self.output_proj(attention_output)
+        final_attention_output = torch.matmul(attention_output, self.output_proj.transpose(0, 1))
+        #final_attention_output = self.output_proj(attention_output)
 
         ########################################
 
