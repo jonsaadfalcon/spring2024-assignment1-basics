@@ -165,7 +165,7 @@ def main():
                           out=model_config["save_path"] + f"checkpoint_{final_iteration}.pt")
     print("Saved model to: ", model_config["save_path"])
 
-    breakpoint()
+    #breakpoint()
 
     logits_for_prediction = model(dataset.examples[0].unsqueeze(0).to(device))
     model.decode_text_from_logits(logits=logits_for_prediction, tokenizer=tokenizer, max_length=100,end_of_text_token_id=tokenizer.encode("|endoftext|")[0])
