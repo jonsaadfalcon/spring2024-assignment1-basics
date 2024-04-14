@@ -167,8 +167,12 @@ def main():
 
     #breakpoint()
 
-    logits_for_prediction = model(dataset.examples[0].unsqueeze(0).to(device))
-    model.decode_from_logits(logits=logits_for_prediction, tokenizer=tokenizer, end_of_text_token_id=tokenizer.encode("|endoftext|")[0])
+    prompt_example = dataset.examples[0]
+    logits_for_prediction = model(prompt_example.unsqueeze(0).to(device))
+    decoded_text = model.decode_from_logits(logits=logits_for_prediction, tokenizer=tokenizer, end_of_text_token_id=tokenizer.encode("|endoftext|")[0])
+
+    print("Prompt Text:", tokenizer.decode(prompt_example))
+    print("Decoded Text:", decoded_text)
 
     wandb.finish()
 

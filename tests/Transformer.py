@@ -611,8 +611,6 @@ class Transformer_LM(nn.Module):
 
     def decode_from_logits(self, logits, tokenizer, end_of_text_token_id):
 
-        breakpoint()
-        
         batch_size, seq_length, vocab_size = logits.size()
         assert batch_size == 1, "Batch size should be 1 for this decoding function."
 
@@ -630,6 +628,7 @@ class Transformer_LM(nn.Module):
                 break
 
         # Convert token ids to text
+        breakpoint()
         decoded_text = tokenizer.decode(decoded_tokens)
         return decoded_text
         
