@@ -359,6 +359,8 @@ class transformer_block_params(nn.Module):
     def __init__(self, d_model:int, num_heads:int, d_ff:int, attn_pdrop:float, residual_pdrop:float, 
                  weights:dict[str, torch.FloatTensor], weight_keys: dict[str, str], eps: float=1e-5):
         
+        super(transformer_block_params, self).__init__()
+        
         self.d_model = d_model 
         self.num_heads = num_heads
         self.d_ff = d_ff
@@ -372,8 +374,6 @@ class transformer_block_params(nn.Module):
         self.multihead_self_attention = multihead_self_attention_params(d_model=self.d_model, num_heads=self.num_heads, attn_pdrop=self.attn_pdrop, weights=self.weights, weight_keys=self.weight_keys)
         self.second_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=self.weight_keys["rms_norm_2"])
         self.positionwise_feedforward = positionwise_feedforward_params(d_model=self.d_model, d_ff=self.d_ff, weights=self.weights, weight_1=self.weight_keys["positionwise_feedforward_1"], weight_2=self.weight_keys["positionwise_feedforward_2"])
-        
-        super(transformer_block_params, self).__init__()
 
     ################################################
 
