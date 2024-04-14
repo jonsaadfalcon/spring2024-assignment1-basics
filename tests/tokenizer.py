@@ -141,7 +141,7 @@ class Tokenizer():
         for token_count, token in enumerate(special_tokens):
             new_token_key = token_count + vocabulary_length
             assert new_token_key not in vocabulary.keys()
-            vocabulary[new_token_key] = token
+            vocabulary[new_token_key] = str(token.encode('utf-8')) #token
 
         with open(merges_filepath, encoding='utf-8') as merges_file:
             for line in merges_file:
