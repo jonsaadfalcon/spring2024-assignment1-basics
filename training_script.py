@@ -18,7 +18,9 @@ class TextDataset(Dataset):
 
         print("Loading training text!")
         with open(file_path, 'rb') as f:
-    
+            
+            print("Max Training Examples in Training Set:", len(f.readlines()))
+            
             for line in tqdm(f.readlines()[10:max_training_examples + 10]):
                 
                 #print("Line:", line.decode('utf-8'))
@@ -110,7 +112,7 @@ def main():
 
     epochs = 1
     saving_interval = 1000
-    max_training_examples = 10
+    max_training_examples = 1000000000
 
     ##################################################
 
