@@ -510,7 +510,7 @@ class Transformer_LM(nn.Module):
 
         current_hidden_state = input_embeddings
         for layer_number in range(self.num_layers):
-            current_hidden_state = self.transformer_block[layer_number](in_feature=current_hidden_state)
+            current_hidden_state = self.transformer_blocks[layer_number](in_feature=current_hidden_state)
 
         ########################################################
 
