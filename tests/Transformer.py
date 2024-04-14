@@ -491,9 +491,9 @@ class Transformer_LM(nn.Module):
         
         ########################################################
         
-        token_embeddings = self.token_embeddings[in_indices]
+        token_embeddings = self.token_embeddings(in_indices)
         position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
-        position_embeddings = self.position_embeddings[position_ids]
+        position_embeddings = self.position_embeddings(position_ids)
         input_embeddings = token_embeddings + position_embeddings
         input_embeddings = F.dropout(input_embeddings, p=self.residual_pdrop, inplace=False)
 
