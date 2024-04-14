@@ -77,10 +77,10 @@ def train(model, device, loader, optimizer, learning_scheduler_config, model_con
                 print(f"Epoch: {epoch}, Idx: {idx}, Loss: {loss.item()}, LR: {optimizer.defaults['lr']}")
 
             if overall_training_count % saving_interval == 0:
-                Transformer_LM.save_checkpoint(model=model,
-                                               optimizer=optimizer,
-                                               iteration=overall_training_count,
-                                               out=model_config["save_path"] + f"checkpoint_{overall_training_count}.pt")
+                model.save_checkpoint(model=model,
+                                      optimizer=optimizer,
+                                      iteration=overall_training_count,
+                                      out=model_config["save_path"] + f"checkpoint_{overall_training_count}.pt")
 
     return overall_training_count
 
@@ -159,19 +159,16 @@ def main():
                             epochs=epochs)
     
     print("Saving model!")
-    Transformer_LM.save_checkpoint(model=model,
-                                   optimizer=optimizer,
-                                   iteration=final_iteration,
-                                   out=model_config["save_path"] + f"checkpoint_{final_iteration}.pt")
+    model.save_checkpoint(model=model,
+                          optimizer=optimizer,
+                          iteration=final_iteration,
+                          out=model_config["save_path"] + f"checkpoint_{final_iteration}.pt")
     print("Saved model to: ", model_config["save_path"])
 
     breakpoint()
 
-    logits_for_prediction = model(model.examples[0].unsqueeze(0).to(device))
-    model.decode_text_from_logits(logits=logits_for_prediction,
-                                  tokenizer=tokenizer,
-                                  max_length=100,
-                                  end_of_text_token_id=tokenizer.token_to_id("|endoftext|"))
+    logits_for_prediction = model(dataset.examples[0].unsqueeze(0).to(device))
+    model.decode_text_from_logits(logits=logits_for_prediction, tokenizer=tokenizer, max_length=100,end_of_text_token_id=tokenizer.encode("|endoftext|")[0])
 
     wandb.finish()
 

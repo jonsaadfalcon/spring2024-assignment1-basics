@@ -607,7 +607,7 @@ class Transformer_LM(nn.Module):
 
     ########################################################
 
-    def decode_text_from_logits(logits, tokenizer, end_of_text_token_id, max_length=50):
+    def decode_text_from_logits(self, logits, tokenizer, end_of_text_token_id, max_length=50):
        
         generated_tokens_for_decoding = []
 
