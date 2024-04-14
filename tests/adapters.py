@@ -13,7 +13,8 @@ import torch
 import torch.nn.functional as F
 
 from tests.Transformer import transformer_block, cross_entropy, rmsnorm, positionwise_feedforward
-from tests.Transformer import multihead_self_attention, SDPA, multihead_self_attention, gelu, load_batch
+from tests.Transformer import multihead_self_attention, SDPA, multihead_self_attention, gelu
+
 from tests.Transformer import Transformer_LM
 
 ########################################################################
@@ -468,7 +469,7 @@ def run_get_batch(
 
     #raise NotImplementedError
     
-    return load_batch(dataset, batch_size, context_length, device)
+    return Transformer_LM.load_batch(dataset, batch_size, context_length, device)
 
 
 def run_softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
