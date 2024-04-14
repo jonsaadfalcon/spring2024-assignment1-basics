@@ -3,19 +3,27 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW
 import wandb
 
+from tokenizer import Tokenizer
+from tqdm import tqdm
+
 class TextDataset(Dataset):
     def __init__(self, file_path, tokenizer, block_size=128):
-
-        #with open(file_path, 'r', encoding='utf-8') as f:
-        #    lines = f.readlines()
-
-        #breakpoint()
+        
         self.examples = []
-        lines = ["Hello, world!", "Transformers are models.", "This is a sample dataset."]
-        for line in lines:
-            tokens = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(line))
-            for i in range(0, max(block_size, len(tokens) - block_size + 1), block_size):  # Overlap is possible
-                self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
+
+        with open(file_path, 'rb') as f:
+    
+            for line in tqdm(f.readlines()[1000:1010]):
+                
+                #print("Line:", line.decode('utf-8'))
+                line_in_bytes = line
+                line_decoded = line_in_bytes.decode('utf-8')
+                tokens = tokenizer.encode(line_decoded)
+
+                for i in range(0, max(block_size, len(tokens) - block_size + 1), block_size):
+                    self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
+
+        ##########################################################
 
     def __len__(self):
         return len(self.examples)
@@ -42,14 +50,13 @@ def main():
     wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
 
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-    model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
-    optimizer = AdamW(model.parameters(), lr=5e-5)
 
-    dataset = TextDataset("path_to_your_dataset.txt", tokenizer)
-    #print("dataset: ", str(dataset))
-    #breakpoint()
+    file_path = "data/TinyStoriesV2-GPT4-train.txt"
+    dataset = TextDataset(file_path, tokenizer)
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 
+    model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
+    optimizer = AdamW(model.parameters(), lr=5e-5)
     train(model, torch.device("cuda"), data_loader, optimizer)
 
     wandb.finish()
