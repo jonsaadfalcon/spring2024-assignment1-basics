@@ -140,6 +140,10 @@ def main():
 
     train(model, device, data_loader, optimizer, 
           learning_scheduler_config=learning_scheduler_config, epochs=epochs)
+    
+    print("Saving model!")
+    model.save_checkpoint(model_config["save_path"])
+    print("Saved model to: ", model_config["save_path"])
 
     wandb.finish()
 
