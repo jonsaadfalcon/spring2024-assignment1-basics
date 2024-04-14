@@ -137,6 +137,12 @@ class Tokenizer():
                 key, value = line.strip().split(': ')
                 vocabulary[key] = value#.replace(" ", "")
 
+        vocabulary_length = len(vocabulary)
+        for token_count, token in enumerate(special_tokens):
+            new_token_key = token_count + vocabulary_length
+            assert new_token_key not in vocabulary.keys()
+            vocabulary[new_token_key] = token
+
         with open(merges_filepath, encoding='utf-8') as merges_file:
             for line in merges_file:
                 merges = [tuple(line.strip().split())]
@@ -245,13 +251,8 @@ class Tokenizer():
             if token_id not in self.special_tokens:
                 final_ids.extend(self.apply_BPE_merges(token_id, self.merges, self.vocabulary))
             else:
-                try:
-                    encoded_token = token_id.encode('utf-8')
-                    final_ids.extend([self.inverse_vocab[encoded_token]])
-                except:
-                    breakpoint()
-                    encoded_token = str(token_id.encode('utf-8'))
-                    final_ids.extend([self.inverse_vocab[encoded_token]])
+                encoded_token = token_id.encode('utf-8')
+                final_ids.extend([self.inverse_vocab[encoded_token]])
 
         return final_ids
     
