@@ -12,13 +12,13 @@ import torch.nn.functional as F
 from torch.nn import Linear, Parameter, Embedding
 
 from numpy import random, zeros, int32
-from torch import tensor, long
+from torch import tensor, long, mean
 
 ########################################################
 
 def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
 
-    from torch import mean
+    breakpoint()
     
     stable_logits = inputs - torch.max(inputs, dim=1, keepdim=True)[0]
     sum_logits = torch.sum(torch.exp(stable_logits), dim=1)
@@ -534,7 +534,7 @@ class Transformer_LM(nn.Module):
 
         linear_output = self.linear_transformation(rms_norm_output)
 
-        breakpoint()
+        #breakpoint()
 
         if labels is not None:
             loss = cross_entropy(linear_output, labels)
