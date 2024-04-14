@@ -110,7 +110,7 @@ def main():
 
     epochs = 1
     saving_interval = 1000
-    max_training_examples = 1
+    max_training_examples = 10
 
     ##################################################
 
