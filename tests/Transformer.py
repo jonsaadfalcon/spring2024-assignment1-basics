@@ -491,15 +491,17 @@ class Transformer_LM(nn.Module):
         
         ########################################################
 
+        #breakpoint()
+
         in_indices = in_indices.to(self.token_embeddings.weight.device)
         token_embeddings = self.token_embeddings(in_indices)
 
-        breakpoint()
+        #breakpoint()
         
-        position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1).to(self.token_embeddings.weight.device)
+        position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1).to(self.position_embeddings.weight.device)
         position_embeddings = self.position_embeddings(position_ids)
 
-        breakpoint()
+        #breakpoint()
 
         input_embeddings = token_embeddings + position_embeddings
         input_embeddings = F.dropout(input_embeddings, p=self.residual_pdrop, inplace=False)

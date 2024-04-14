@@ -77,7 +77,7 @@ def main():
                                      special_tokens=["|endoftext|"])
 
     file_path = "data/TinyStoriesV2-GPT4-train.txt"
-    dataset = TextDataset(file_path, tokenizer)
+    dataset = TextDataset(file_path, tokenizer, block_size=model_config["context_length"])
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 
     #########################
