@@ -38,7 +38,7 @@ class TextDataset(Dataset):
     def __getitem__(self, i):
         return self.examples[i]
 
-def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3):
+def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3, logging_interval=10):
     model.train()
     for epoch in range(epochs):  # run for more epochs depending on dataset size
         for idx, input_ids in enumerate(loader):
@@ -49,7 +49,7 @@ def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3)
 
             gradient_clipping(model.parameters(), max_l2_norm=1.0)
 
-            breakpoint()
+            #breakpoint()
             
             loss.backward()
             optimizer.step()
@@ -61,9 +61,9 @@ def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3)
                                                               warmup_iters=learning_scheduler_config['warmup_iters'],
                                                               cosine_cycle_iters=learning_scheduler_config['cosine_cycle_iters'])
 
-            if idx % 10 == 0:  # log every 10 batches
+            if idx % logging_interval == 0:
                 wandb.log({"loss": loss.item()})
-                print(f"Epoch: {epoch}, Loss: {loss.item()}, LR: {optimizer.defaults['lr']}")
+                print(f"Epoch: {epoch}, Idx: {idx}, Loss: {loss.item()}, LR: {optimizer.defaults['lr']}")
 
 def main():
     wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
