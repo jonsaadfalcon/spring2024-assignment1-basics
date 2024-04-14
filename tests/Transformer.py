@@ -372,10 +372,10 @@ class transformer_block_params(nn.Module):
 
         breakpoint()
 
-        self.first_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=self.weight_keys["rms_norm_1"])
-        self.multihead_self_attention = multihead_self_attention_params(d_model=self.d_model, num_heads=self.num_heads, attn_pdrop=self.attn_pdrop, weights=self.weights, weight_keys=self.weight_keys)
-        self.second_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=self.weight_keys["rms_norm_2"])
-        self.positionwise_feedforward = positionwise_feedforward_params(d_model=self.d_model, d_ff=self.d_ff, weights=self.weights, weight_1=self.weight_keys["positionwise_feedforward_1"], weight_2=self.weight_keys["positionwise_feedforward_2"])
+        self.first_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=weight_keys["rms_norm_1"])
+        self.multihead_self_attention = multihead_self_attention_params(d_model=self.d_model, num_heads=self.num_heads, attn_pdrop=self.attn_pdrop, weights=self.weights, weight_keys=weight_keys)
+        self.second_rms_norm = rmsnorm_params(d_model=self.d_model, eps=self.eps, weights=self.weights, weight_key=weight_keys["rms_norm_2"])
+        self.positionwise_feedforward = positionwise_feedforward_params(d_model=self.d_model, d_ff=self.d_ff, weights=self.weights, weight_1=weight_keys["positionwise_feedforward_1"], weight_2=weight_keys["positionwise_feedforward_2"])
 
     ################################################
 
