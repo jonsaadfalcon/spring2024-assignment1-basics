@@ -84,6 +84,8 @@ def main():
 
     #print("dataset examples:" + str(dataset.examples))
 
+    device = torch.device("cuda:0")
+
     #model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
     model =  Transformer_LM(vocab_size = model_config["vocab_size"],
                             context_length = model_config["context_length"],
@@ -94,10 +96,11 @@ def main():
                             attn_pdrop = model_config["attn_pdrop"],
                             residual_pdrop = model_config["residual_pdrop"],
                             weights = model_config["weights"],)
-    model.to(torch.device("cuda"))
+    model.to(device)
+    breakpoint()
     #optimizer = AdamW(model.parameters(), lr=5e-5)
     optimizer = AdamW(model.parameters(), lr=5e-5)
-    train(model, torch.device("cuda"), data_loader, optimizer)
+    train(model, device, data_loader, optimizer)
 
     wandb.finish()
 
