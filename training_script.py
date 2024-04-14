@@ -48,7 +48,7 @@ def main():
     dataset = TextDataset("path_to_your_dataset.txt", tokenizer)
     #print("dataset: ", str(dataset))
     #breakpoint()
-    data_loader = DataLoader(dataset, batch_size=2, shuffle=True)
+    data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
 
     train(model, torch.device("cuda"), data_loader, optimizer)
 
