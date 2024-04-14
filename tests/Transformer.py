@@ -490,6 +490,8 @@ class Transformer_LM(nn.Module):
                 labels: torch.LongTensor | None = None,):
         
         ########################################################
+
+        in_indices = in_indices.to(self.token_embeddings.weight.device)
         
         token_embeddings = self.token_embeddings(in_indices)
         position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
