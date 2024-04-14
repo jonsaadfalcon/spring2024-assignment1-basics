@@ -21,6 +21,8 @@ def cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
     if len(inputs.shape) == 3:
         inputs = inputs.view(-1, inputs.size(-1))  # Reshape to (batch_size * seq_len, num_classes)
 
+    breakpoint()
+
     # Ensure that inputs and targets have compatible first dimensions
     assert inputs.size(0) == targets.size(0), "The number of examples should match in inputs and targets"
 
