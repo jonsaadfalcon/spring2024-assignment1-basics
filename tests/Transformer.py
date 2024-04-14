@@ -545,7 +545,7 @@ class Transformer_LM(nn.Module):
             loss = cross_entropy(linear_output, labels)
             return CausalLMOutput(
                 loss=loss,
-                last_hidden_state=linear_output,
+                logits=linear_output,
                 hidden_states=None,
                 attentions=None
             )
