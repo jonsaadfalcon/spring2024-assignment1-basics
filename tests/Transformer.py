@@ -258,3 +258,149 @@ def load_batch(
     ################################################
     
     return tensor(inputs, dtype=long, device=device), tensor(target_labels, dtype=long, device=device)
+
+########################################################
+
+import torch.nn as nn
+class Transformer_Block(nn.Module):
+
+    def __init__(self, d_model:int, num_heads:int, d_ff:int, attn_pdrop:float, residual_pdrop:float, 
+                 weights:dict[str, torch.FloatTensor], weight_keys: dict[str, str]):
+        
+        self.d_model = d_model 
+        self.num_heads = num_heads
+        self.d_ff = d_ff
+        self.attn_pdrop = attn_pdrop
+        self.residual_pdrop = residual_pdrop
+        self.weights = weights
+        self.weights_keys = weight_keys
+        
+        super(transformer_block, self).__init__()
+
+    ################################################
+
+    def forward(self, in_features: torch.FloatTensor):
+    
+        eps = 1e-5
+
+        rms_norm_output = rmsnorm(d_model=self.d_model, eps=eps, in_features=in_features, weights=self.weights, weight_key=self.weight_keys["rms_norm_1"])
+        attention_output = multihead_self_attention(self.d_model, self.num_heads, self.attn_pdrop, self.weights, rms_norm_output, weight_keys=self.weight_keys)
+        causal_attention_output = F.dropout(attention_output, p=self.residual_pdrop, inplace=False)
+        attention_output = in_features + causal_attention_output
+
+        rms_norm_output = rmsnorm(d_model=self.d_model, eps=eps, in_features=attention_output, weights=self.weights, weight_key=self.weight_keys["rms_norm_2"])
+        position_feedforward_output = positionwise_feedforward(self.d_model, self.d_ff, weights=self.weights, in_features=rms_norm_output,
+                                                            weight_1=self.weight_keys["positionwise_feedforward_1"], 
+                                                            weight_2=self.weight_keys["positionwise_feedforward_2"])
+        position_feedforward_output = F.dropout(position_feedforward_output, p=self.residual_pdrop, inplace=False)
+        final_output = attention_output + position_feedforward_output
+
+        return final_output
+    
+########################################################
+
+class Transformer_LM(nn.Module):
+
+    def __init__(self,
+        vocab_size: int,
+        context_length: int,
+        d_model: int,
+        num_layers: int,
+        num_heads: int,
+        d_ff: int,
+        attn_pdrop: float,
+        residual_pdrop: float,
+        weights: dict[str, torch.FloatTensor],
+        in_indices: torch.LongTensor,
+        weight_keys: dict[str, str]
+    ):
+
+        self.vocab_size = vocab_size
+        self.context_length = context_length
+        self.d_model = d_model
+        self.num_layers = num_layers
+        self.num_heads = num_heads
+        self.d_ff = d_ff
+        self.attn_pdrop = attn_pdrop
+        self.residual_pdrop = residual_pdrop
+        self.weights = weights
+        self.in_indices = in_indices
+        self.weights_keys = weight_keys
+
+        super(Transformer_LM, self).__init__()
+
+    ################################################
+
+    def save_checkpoint(
+        model: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        iteration: int,
+        out: str | os.PathLike | BinaryIO | IO[bytes],
+    ):
+        #raise NotImplementedError
+        checkpoint = {
+            'optimizer_state_dict': optimizer.state_dict(),
+            'model_state_dict': model.state_dict(),
+            'iteration': iteration,
+        }
+        torch.save(checkpoint, out)
+
+    ################################################
+    
+    def load_checkpoint(
+        src: str | os.PathLike | BinaryIO | IO[bytes],
+        model: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+    ):
+        #raise NotImplementedError
+        
+        loaded_checkpoint = torch.load(src)
+        optimizer.load_state_dict(loaded_checkpoint['optimizer_state_dict'])
+        model.load_state_dict(loaded_checkpoint['model_state_dict'])
+
+        return loaded_checkpoint['iteration']
+
+
+    ########################################################
+
+    def forward(self,
+                in_indices: torch.LongTensor,):
+        token_embeddings = self.weights['token_embeddings.weight'][in_indices]
+        position_ids = torch.arange(in_indices.shape[1]).repeat(in_indices.shape[0], 1)
+        position_embeddings = self.weights['position_embeddings.weight'][position_ids]
+        input_embeddings = token_embeddings + position_embeddings
+        input_embeddings = F.dropout(input_embeddings, p=self.residual_pdrop, inplace=False)
+
+        current_hidden_state = input_embeddings
+        for layer_number in range(self.num_layers):
+            #breakpoint()
+            weight_keys = {
+                "rms_norm_1": f"layers.{layer_number}.ln1.weight",
+                "rms_norm_2": f"layers.{layer_number}.ln2.weight",
+                "positionwise_feedforward_1": f"layers.{layer_number}.ffn.w1.weight",
+                "positionwise_feedforward_2": f"layers.{layer_number}.ffn.w2.weight",
+                "q_proj": f"layers.{layer_number}.attn.q_proj.weight",
+                "k_proj": f"layers.{layer_number}.attn.k_proj.weight",
+                "v_proj": f"layers.{layer_number}.attn.v_proj.weight",
+                "output_proj": f"layers.{layer_number}.attn.output_proj.weight",
+            }
+            
+            current_hidden_state = transformer_block(d_model=self.d_model, num_heads=self.num_heads, d_ff=self.d_ff, attn_pdrop=self.attn_pdrop, 
+                                                    residual_pdrop=self.residual_pdrop, weights=self.weights, in_features=current_hidden_state, 
+                                                    weight_keys=weight_keys)
+
+        
+        #breakpoint()
+
+        from torch.nn import Linear, Parameter
+        linear_transformation = Linear(self.d_model, self.vocab_size)
+        linear_transformation.weight = Parameter(self.weights['lm_head.weight'])
+
+        rms_norm_output = rmsnorm(d_model=self.d_model, eps=1e-5, weights=self.weights, in_features=current_hidden_state, weight_key="ln_final.weight")
+        #linear_output = torch.matmul(rms_norm_output, weights['lm_head.weight'].t())
+        linear_output = torch.nn.functional.linear(rms_norm_output, self.weights['lm_head.weight'])
+        #softmax_output = run_softmax(linear_output, dim=-1)
+        
+        
+        return linear_output
+        

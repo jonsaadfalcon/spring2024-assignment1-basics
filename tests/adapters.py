@@ -14,7 +14,7 @@ import torch.nn.functional as F
 
 from tests.Transformer import transformer_block, cross_entropy, rmsnorm, positionwise_feedforward
 from tests.Transformer import multihead_self_attention, SDPA, multihead_self_attention, gelu, load_batch
-
+from tests.Transformer import Transformer_LM
 
 ########################################################################
 
@@ -605,7 +605,8 @@ def run_save_checkpoint(
         out: str | os.PathLike | BinaryIO | IO[bytes]
             Path or file-like object to serialize the model, optimizer, and iteration to.
     """
-    raise NotImplementedError
+    #raise NotImplementedError
+    return Transformer_LM.save_checkpoint(model, optimizer, iteration, out)
 
 
 def run_load_checkpoint(
@@ -629,7 +630,8 @@ def run_load_checkpoint(
     Returns:
         int, the previously-serialized number of iterations.
     """
-    raise NotImplementedError
+    #raise NotImplementedError
+    return Transformer_LM.load_checkpoint(src, model, optimizer)
 
 
 def get_tokenizer(
