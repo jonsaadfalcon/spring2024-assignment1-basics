@@ -629,6 +629,6 @@ class Transformer_LM(nn.Module):
 
         # Convert token ids to text
         breakpoint()
-        decoded_text = tokenizer.decode(decoded_tokens)
+        decoded_text = (" ").join([tokenizer.vocabulary[token] for token in decoded_tokens])
         return decoded_text
         
