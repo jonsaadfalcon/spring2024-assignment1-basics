@@ -94,6 +94,7 @@ def main():
                             attn_pdrop = model_config["attn_pdrop"],
                             residual_pdrop = model_config["residual_pdrop"],
                             weights = model_config["weights"],)
+    model.to(torch.device("cuda"))
     #optimizer = AdamW(model.parameters(), lr=5e-5)
     optimizer = AdamW(model.parameters(), lr=5e-5)
     train(model, torch.device("cuda"), data_loader, optimizer)
