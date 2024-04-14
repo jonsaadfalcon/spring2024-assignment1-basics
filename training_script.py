@@ -4,7 +4,10 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW
 import wandb
 
 from tests.tokenizer import Tokenizer
+from tests.Transformer import Transformer_LM
 from tqdm import tqdm
+
+##########################################################
 
 class TextDataset(Dataset):
     def __init__(self, file_path, tokenizer, block_size=128):
@@ -14,7 +17,7 @@ class TextDataset(Dataset):
         print("Loading training text!")
         with open(file_path, 'rb') as f:
     
-            for line in tqdm(f.readlines()[1000:1010]):
+            for line in tqdm(f.readlines()[1000:1003]):
                 
                 #print("Line:", line.decode('utf-8'))
                 line_in_bytes = line
@@ -50,11 +53,15 @@ def train(model, device, loader, optimizer):
 def main():
     wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
 
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    tokenizer = Tokenizer.from_files(vocab_filepath='tokenizer_saved/ts_vocab.txt',
+                                     merges_filepath='tokenizer_saved/ts_merges.txt', 
+                                     special_tokens=["|endoftext|"])
 
     file_path = "data/TinyStoriesV2-GPT4-train.txt"
     dataset = TextDataset(file_path, tokenizer)
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True)
+
+    print("dataset examples:" + str(dataset.examples))
 
     model = GPT2LMHeadModel.from_pretrained('gpt2').cuda()
     optimizer = AdamW(model.parameters(), lr=5e-5)
