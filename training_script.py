@@ -60,6 +60,8 @@ def train(model, device, loader, optimizer, learning_scheduler_config, epochs=3,
                                                               min_learning_rate=learning_scheduler_config['min_learning_rate'],
                                                               warmup_iters=learning_scheduler_config['warmup_iters'],
                                                               cosine_cycle_iters=learning_scheduler_config['cosine_cycle_iters'])
+            
+            print("optimizer.defaults['lr']: ", optimizer.defaults['lr'])
 
             if idx % logging_interval == 0:
                 wandb.log({"loss": loss.item()})
