@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW
 import wandb
 
-from tokenizer import Tokenizer
+from tests.tokenizer import Tokenizer
 from tqdm import tqdm
 
 class TextDataset(Dataset):
