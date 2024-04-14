@@ -29,6 +29,7 @@ class TextDataset(Dataset):
 
                 for i in range(0, max(block_size, len(tokens) - block_size + 1), block_size):
                     self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
+                    breakpoint()
 
         ##########################################################
 
