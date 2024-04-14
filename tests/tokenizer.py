@@ -299,11 +299,11 @@ class Tokenizer():
             tokens = tokens.tolist()
         assert type(tokens[0]) == int
 
-        breakpoint()
+        #breakpoint()
         
         decoded_text = []
         for token_id in tokens:
-            token_text = self.vocabulary[token_id]
+            token_text = self.vocabulary[token_id].replace("b'", "").replace("'", "")
             decoded_text.append(token_text)
         decoded_text = ("").join(decoded_text)
         return decoded_text
