@@ -1,58 +1,65 @@
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
+from torch.utils.data import DataLoader, Dataset
+from transformers import BertTokenizer, BertForSequenceClassification, AdamW
 import wandb
 
-##########################################
+class TextDataset(Dataset):
+    def __init__(self, texts, tokenizer, max_len=512):
+        self.tokenizer = tokenizer
+        self.texts = texts
+        self.max_len = max_len
 
-def train(model, device, train_loader, optimizer, epoch, log_interval=10):
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        text = self.texts[idx]
+        inputs = self.tokenizer(text, max_length=self.max_len, padding='max_length', truncation=True, return_tensors="pt")
+        return {
+            'input_ids': inputs['input_ids'].squeeze(0),  # Remove batch dimension
+            'attention_mask': inputs['attention_mask'].squeeze(0)
+        }
+
+def train(model, device, train_loader, optimizer, epoch):
     model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
-        optimizer.zero_grad()
-        output = model(data)
-        loss = nn.CrossEntropyLoss()(output, target)
+    for batch_idx, batch in enumerate(train_loader):
+        input_ids = batch['input_ids'].to(device)
+        attention_mask = batch['attention_mask'].to(device)
+        outputs = model(input_ids, attention_mask=attention_mask, labels=input_ids)  # Assuming MLM task
+        loss = outputs.loss
         loss.backward()
         optimizer.step()
-        
-        if batch_idx % log_interval == 0:
-            print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)} '
-                  f'({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
-            wandb.log({"loss": loss.item(), "epoch": epoch})
+        optimizer.zero_grad()
 
-##########################################
+        if batch_idx % 10 == 0:
+            wandb.log({"loss": loss.item()})
+            print(f'Epoch: {epoch} Batch: {batch_idx} Loss: {loss.item()}')
 
 def main():
-    
-    wandb.init(project='LLM_from_Scratch', 
-               entity='jonsaadfalcon')
+    # Initialize Weights & Biases
+    wandb.init(project='transformer_pretraining', entity='your_username')
 
+    # Set up device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    # Load tokenizer and model
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertForSequenceClassification.from_pretrained('bert-base-uncased').to(device)
 
-    model = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28*28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10)
-    ).to(device)
-    
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    # Example data (replace with your actual dataset)
+    texts = ["Hello, world!", "Transformers are models.", "This is a sample dataset."]
+    dataset = TextDataset(texts, tokenizer)
+    train_loader = DataLoader(dataset, batch_size=2, shuffle=True)
 
-    epochs = 10
-    for epoch in range(1, epochs + 1):
+    # Optimizer
+    optimizer = AdamW(model.parameters(), lr=1e-5)
+
+    # Training loop
+    epochs = 3
+    for epoch in range(epochs):
         train(model, device, train_loader, optimizer, epoch)
 
-    # Close wandb session
+    # End wandb run
     wandb.finish()
 
 if __name__ == "__main__":
