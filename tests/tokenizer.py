@@ -121,7 +121,7 @@ class Tokenizer():
 
         self.inverse_vocab = {}
         for k, v in self.vocabulary.items():
-            self.inverse_vocab[v] = k
+            self.inverse_vocab[v] = int(k)
 
     ############################################################
     
