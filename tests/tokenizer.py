@@ -290,3 +290,14 @@ class Tokenizer():
     def decode(self, tokens: list[int]) -> str:
         
         return b''.join([self.vocabulary.get(id, '�') for id in tokens]).decode('utf-8', errors='replace')
+    
+    ####################################
+    
+    def decode_v2(self, tokens: list[int]) -> str:
+        
+        decoded_text = []
+        for token_id in tokens:
+            token_text = tokens.vocabulary[token_id]
+            decoded_text.append(token_text)
+        decoded_text = (" ").join(decoded_text)
+        return decoded_text

@@ -625,10 +625,5 @@ class Transformer_LM(nn.Module):
             if next_token_id == end_of_text_token_id:
                 break
 
-        decoded_text = []
-        for token_id in decoded_tokens:
-            token_text = tokenizer.vocabulary[token_id]
-            decoded_text.append(token_text)
-        decoded_text = (" ").join(decoded_text)
-        return decoded_text
+        return tokenizer.decode_v2(decoded_tokens)
         
