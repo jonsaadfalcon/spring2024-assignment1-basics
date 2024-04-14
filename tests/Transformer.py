@@ -248,12 +248,12 @@ class positionwise_feedforward_params(nn.Module):
         weight_2="w2.weight",
     ) -> torch.FloatTensor:
         
+        super(positionwise_feedforward_params, self).__init__()
+        
         self.d_model = d_model
         self.dff = d_ff
         self.w1_weights = weights[weight_1]
         self.w2_weights = weights[weight_2]
-
-        super(positionwise_feedforward_params, self).__init__()
 
     ########################################################
 
@@ -278,6 +278,8 @@ class multihead_self_attention_params(nn.Module):
         weight_keys: dict[str, str] = None,
     ) -> torch.FloatTensor:
         
+        super(multihead_self_attention_params, self).__init__()
+        
         self.d_model = d_model
         self.num_heads = num_heads
         self.attn_pdrop = attn_pdrop
@@ -289,8 +291,6 @@ class multihead_self_attention_params(nn.Module):
         self.V_weights = weights[weight_keys["v_proj"]]
 
         self.output_proj = weights[weight_keys["output_proj"]]
-
-        super(multihead_self_attention_params, self).__init__()
 
     ########################################
 
@@ -335,12 +335,12 @@ class rmsnorm_params(nn.Module):
         weight_key="weight"
     ) -> torch.FloatTensor:
         
+        super(rmsnorm_params, self).__init__()
+        
         self.eps = eps
         self.weights = weights
         self.d_model = d_model
         self.rmsnorm = Parameter(weights[weight_key])
-
-        super(rmsnorm_params, self).__init__()
 
     def perform_rmsnorm(self, in_features: torch.FloatTensor):
     
