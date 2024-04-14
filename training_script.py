@@ -18,7 +18,7 @@ class TextDataset(Dataset):
         print("Loading training text!")
         with open(file_path, 'rb') as f:
     
-            for line in tqdm(f.readlines()[:max_training_examples]):
+            for line in tqdm(f.readlines()[10:max_training_examples + 10]):
                 
                 #print("Line:", line.decode('utf-8'))
                 line_in_bytes = line
@@ -28,7 +28,8 @@ class TextDataset(Dataset):
                 #breakpoint()
 
                 for i in range(0, max(block_size, len(tokens) - block_size + 1), block_size):
-                    self.examples.append(torch.tensor(tokens[i:i + block_size], dtype=torch.long))
+                    tensor_training_example = torch.tensor(tokens[i:i + block_size], dtype=torch.long)[:10]
+                    self.examples.append(tensor_training_example)
                     breakpoint()
 
         ##########################################################
