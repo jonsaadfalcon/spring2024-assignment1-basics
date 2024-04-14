@@ -294,6 +294,9 @@ class Tokenizer():
     ####################################
     
     def decode_v2(self, tokens: list[int]) -> str:
+
+        tokens = tokens.tolist()
+        assert type(tokens[0]) == int
         
         decoded_text = []
         for token_id in tokens:
