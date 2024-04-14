@@ -290,7 +290,7 @@ class multihead_self_attention_params(nn.Module):
         self.weights = weights
         self.weight_keys = weight_keys
 
-        if weight_keys is not None:
+        if weights is not None:
             self.Q_weights = weights[weight_keys["q_proj"]]
             self.K_weights = weights[weight_keys["k_proj"]] 
             self.V_weights = weights[weight_keys["v_proj"]]
