@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from tests.tokenizer import Tokenizer
 from tests.Transformer import Transformer_LM
-from tests.optimizer import AdamW
+from tests.optimizer import AdamW, gradient_clipping, get_lr_cosine_schedule
 
 ##########################################################
 
@@ -42,9 +42,13 @@ def train(model, device, loader, optimizer):
     model.train()
     for epoch in range(3):  # run for more epochs depending on dataset size
         for idx, input_ids in enumerate(loader):
+            
             input_ids = input_ids.to(device)
             outputs = model(input_ids, labels=input_ids)
             loss = outputs.loss
+
+            gradient_clipping(model.parameters(), max_l2_norm=1.0)
+            
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
