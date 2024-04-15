@@ -97,7 +97,7 @@ def main():
     model_config = {
         "name:": "testing_transformer",
         "vocab_size": 10000,
-        "context_length": 64, #1024
+        "context_length": 128, #1024
         "num_layers": 36,
         "d_model": 1280,
         "num_heads": 20,
@@ -121,7 +121,7 @@ def main():
     saving_interval = 10000
     max_training_examples = 100000 #1000000000
     logging_interval = 100000
-    batch_size = 64
+    batch_size = 32
 
     ##################################################
 
