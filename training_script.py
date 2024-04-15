@@ -48,6 +48,8 @@ class TextDataset(Dataset):
     def __getitem__(self, i):
         return self.examples[i]
 
+##########################################################
+
 def train(model, device, loader, optimizer, learning_scheduler_config, model_config, saving_interval=1000, epochs=3, logging_interval=100):
     model.train()
     overall_training_count = 0
@@ -115,6 +117,7 @@ def main():
     epochs = 3
     saving_interval = 10000
     max_training_examples = 100000 #1000000000
+    logging_interval = 100000
 
     ##################################################
 
@@ -160,7 +163,7 @@ def main():
     final_iteration = train(model, device, data_loader, optimizer, 
                             learning_scheduler_config=learning_scheduler_config, 
                             model_config=model_config, saving_interval=saving_interval,
-                            epochs=epochs)
+                            epochs=epochs, logging_interval=logging_interval)
     
     print("Saving model!")
     model.save_checkpoint(model=model,
