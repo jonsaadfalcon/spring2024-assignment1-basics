@@ -19,7 +19,7 @@ class TextDataset(Dataset):
         print("Loading training text!")
         with open(file_path, 'rb') as f:
             
-            print("Max Training Examples in Training Set:", len(f.readlines()))
+            print("Maximum Possible Training Examples in Training Set:", len(f.readlines()))
 
             for line in tqdm(f.readlines()[10:max_training_examples + 10]):
                 
@@ -37,6 +37,8 @@ class TextDataset(Dataset):
                     else:
                         self.examples.append(tensor_training_example)
                     #breakpoint()
+
+        print("Number of Examples in Training Set:", len(self.examples))
 
         ##########################################################
 
