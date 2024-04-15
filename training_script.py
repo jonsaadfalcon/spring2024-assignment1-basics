@@ -119,6 +119,7 @@ def main():
     saving_interval = 10000
     max_training_examples = 100000 #1000000000
     logging_interval = 100000
+    batch_size = 64
 
     ##################################################
 
@@ -128,7 +129,7 @@ def main():
 
     file_path = "data/TinyStoriesV2-GPT4-train.txt"
     dataset = TextDataset(file_path, tokenizer, block_size=model_config["context_length"], max_training_examples=max_training_examples)
-    data_loader = DataLoader(dataset, batch_size=8, shuffle=True)
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     ##################################################
 
