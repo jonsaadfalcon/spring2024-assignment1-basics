@@ -54,7 +54,8 @@ def train(model, device, loader, optimizer, learning_scheduler_config, model_con
     model.train()
     overall_training_count = 0
     for epoch in range(epochs):  # run for more epochs depending on dataset size
-        for idx, input_ids in enumerate(loader):
+        print("Epoch #:", epoch)
+        for idx, input_ids in tqdm(enumerate(loader)):
 
             overall_training_count += 1
             
