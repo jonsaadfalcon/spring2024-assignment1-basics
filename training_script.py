@@ -115,6 +115,8 @@ def main():
         "cosine_cycle_iters": 10000
     }
 
+    ##################################################
+
     epochs = 3
     saving_interval = 10000
     max_training_examples = 100000 #1000000000
