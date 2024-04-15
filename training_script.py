@@ -105,7 +105,7 @@ def main():
         "attn_pdrop": 0.1,
         "residual_pdrop": 0.1,
         "weights": None, #torch.load("tests/fixtures/transformer_lm_weights.pt"),
-        "save_path": "transformers_saved/testing/"
+        "save_path": "transformers_saved/gpt-2-xl-64-context-length/"
     }
 
     learning_scheduler_config = {
