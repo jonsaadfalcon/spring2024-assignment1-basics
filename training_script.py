@@ -105,7 +105,7 @@ def main():
         "attn_pdrop": 0.1,
         "residual_pdrop": 0.1,
         "weights": None, #torch.load("tests/fixtures/transformer_lm_weights.pt"),
-        "save_path": "transformers_saved/gpt-2-xl-64-context-length/"
+        "save_path": "transformers_saved/gpt-2-xl-128-context-length/"
     }
 
     learning_scheduler_config = {
@@ -121,7 +121,7 @@ def main():
     saving_interval = 10000
     max_training_examples = 100000 #1000000000
     logging_interval = 100000
-    batch_size = 32
+    batch_size = 64
 
     ##################################################
 
