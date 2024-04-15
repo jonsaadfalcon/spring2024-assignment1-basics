@@ -20,7 +20,7 @@ class TextDataset(Dataset):
         with open(file_path, 'rb') as f:
             
             print("Max Training Examples in Training Set:", len(f.readlines()))
-            
+
             for line in tqdm(f.readlines()[10:max_training_examples + 10]):
                 
                 #print("Line:", line.decode('utf-8'))
@@ -46,7 +46,7 @@ class TextDataset(Dataset):
     def __getitem__(self, i):
         return self.examples[i]
 
-def train(model, device, loader, optimizer, learning_scheduler_config, model_config, saving_interval=1000, epochs=3, logging_interval=10):
+def train(model, device, loader, optimizer, learning_scheduler_config, model_config, saving_interval=1000, epochs=3, logging_interval=100):
     model.train()
     overall_training_count = 0
     for epoch in range(epochs):  # run for more epochs depending on dataset size
@@ -111,7 +111,7 @@ def main():
     }
 
     epochs = 1
-    saving_interval = 1000
+    saving_interval = 10000
     max_training_examples = 1000000000
 
     ##################################################
