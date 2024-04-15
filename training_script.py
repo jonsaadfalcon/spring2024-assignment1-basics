@@ -92,12 +92,24 @@ def train(model, device, loader, optimizer, learning_scheduler_config, model_con
     return overall_training_count
 
 def main():
+
     wandb.init(project="LLM_from_Scratch", entity="jonsaadfalcon")
+
+    ##################################################
+
+    epochs = 3
+    saving_interval = 10000
+    max_training_examples = 100000 #1000000000
+    logging_interval = 100000
+    batch_size = 32
+    context_length = 128 #1024
+
+    ##################################################
 
     model_config = {
         "name:": "testing_transformer",
         "vocab_size": 10000,
-        "context_length": 128, #1024
+        "context_length": context_length,
         "num_layers": 36,
         "d_model": 1280,
         "num_heads": 20,
@@ -105,7 +117,7 @@ def main():
         "attn_pdrop": 0.1,
         "residual_pdrop": 0.1,
         "weights": None, #torch.load("tests/fixtures/transformer_lm_weights.pt"),
-        "save_path": "transformers_saved/gpt-2-xl-128-context-length/"
+        "save_path": f"transformers_saved/gpt-2-xl-{context_length}-context-length_{batch_size}_batch_size/"
     }
 
     learning_scheduler_config = {
@@ -114,14 +126,6 @@ def main():
         "warmup_iters": 1000,
         "cosine_cycle_iters": 10000
     }
-
-    ##################################################
-
-    epochs = 3
-    saving_interval = 10000
-    max_training_examples = 100000 #1000000000
-    logging_interval = 100000
-    batch_size = 64
 
     ##################################################
 
